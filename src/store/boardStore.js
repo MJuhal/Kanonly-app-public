@@ -172,7 +172,7 @@ export const useBoardStore = create((set, get) => {
       });
     },
 
-    createColumn: (boardId, title) => {
+    createColumn: (boardId, title, color) => {
       const boardCols = get().columns.filter((c) => c.boardId === boardId);
       const newCol = {
         id: generateId(),
@@ -180,6 +180,7 @@ export const useBoardStore = create((set, get) => {
         boardId,
         order: boardCols.length,
         ticketIds: [],
+        color: color || null,
       };
       persist((state) => ({
         ...state,
@@ -193,6 +194,15 @@ export const useBoardStore = create((set, get) => {
         ...state,
         columns: state.columns.filter((c) => c.id !== columnId),
         tickets: state.tickets.filter((t) => t.columnId !== columnId),
+      }));
+    },
+
+    updateColumn: (columnId, updates) => {
+      persist((state) => ({
+        ...state,
+        columns: state.columns.map((c) =>
+          c.id === columnId ? { ...c, ...updates } : c
+        ),
       }));
     },
 
@@ -259,6 +269,47 @@ export const useBoardStore = create((set, get) => {
         selectedTicketId:
           state.selectedTicketId === ticketId ? null : state.selectedTicketId,
       }));
+    },
+
+    duplicateTicket: (ticketId) => {
+      const state = get();
+      const original = state.tickets.find((t) => t.id === ticketId);
+      if (!original) return null;
+
+      const column = state.columns.find((c) => c.id === original.columnId);
+      if (!column) return null;
+
+      const boardId = column.boardId;
+      const board = state.boards.find((b) => b.id === boardId);
+      const nextNum = (board?.ticketCounter || 0) + 1;
+
+      const newTicket = {
+        ...original,
+        id: generateId(),
+        displayId: padTicketId(nextNum),
+        title: `${original.title} (copia)`,
+        createdAt: Date.now(),
+        comments: (original.comments || []).map((c) => ({ ...c, id: generateId() })),
+      };
+
+      persist((s) => {
+        const newBoards = [...s.boards];
+        const idx = newBoards.findIndex((b) => b.id === boardId);
+        if (idx >= 0) {
+          newBoards[idx] = { ...newBoards[idx], ticketCounter: nextNum };
+        }
+        return {
+          ...s,
+          boards: newBoards,
+          tickets: [...s.tickets, newTicket],
+          columns: s.columns.map((c) =>
+            c.id === original.columnId
+              ? { ...c, ticketIds: [...c.ticketIds, newTicket.id] }
+              : c
+          ),
+        };
+      });
+      return newTicket.id;
     },
 
     reorderColumns: (boardId, orderedColumnIds) => {
@@ -368,6 +419,8 @@ export const useBoardStore = create((set, get) => {
 
     // Notas
     createNote: (title) => {
+      const state = get();
+      const maxSort = state.notes.reduce((max, n) => Math.max(max, n.sortOrder || 0), -1);
       const newNote = {
         id: generateId(),
         title,
@@ -375,13 +428,25 @@ export const useBoardStore = create((set, get) => {
         links: [],
         images: [],
         priority: 'medium',
+        comments: [],
         createdAt: Date.now(),
+        sortOrder: maxSort + 1,
       };
-      persist((state) => ({
-        ...state,
-        notes: [newNote, ...state.notes],
+      persist((s) => ({
+        ...s,
+        notes: [...s.notes, newNote],
       }));
       return newNote.id;
+    },
+
+    reorderNotes: (orderedIds) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) => {
+          const idx = orderedIds.indexOf(n.id);
+          return idx >= 0 ? { ...n, sortOrder: idx } : n;
+        }),
+      }));
     },
 
     updateNote: (noteId, updates) => {
@@ -398,6 +463,50 @@ export const useBoardStore = create((set, get) => {
         ...state,
         notes: state.notes.filter((n) => n.id !== noteId),
         selectedNoteId: state.selectedNoteId === noteId ? null : state.selectedNoteId,
+      }));
+    },
+
+    addNoteComment: (noteId, text) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? {
+                ...n,
+                comments: [
+                  ...(n.comments || []),
+                  { id: generateId(), text, createdAt: Date.now(), updatedAt: Date.now() },
+                ],
+              }
+            : n
+        ),
+      }));
+    },
+
+    updateNoteComment: (noteId, commentId, text) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? {
+                ...n,
+                comments: (n.comments || []).map((c) =>
+                  c.id === commentId ? { ...c, text, updatedAt: Date.now() } : c
+                ),
+              }
+            : n
+        ),
+      }));
+    },
+
+    deleteNoteComment: (noteId, commentId) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? { ...n, comments: (n.comments || []).filter((c) => c.id !== commentId) }
+            : n
+        ),
       }));
     },
 

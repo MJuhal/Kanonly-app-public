@@ -45,6 +45,33 @@ function fromDateInputValue(value) {
   return new Date(year, month - 1, day).getTime();
 }
 
+function parseDeadline(deadline) {
+  if (!deadline) return { day: '', month: '', year: '' };
+  const d = new Date(deadline);
+  if (isNaN(d.getTime())) return { day: '', month: '', year: '' };
+  return {
+    day: String(d.getDate()).padStart(2, '0'),
+    month: String(d.getMonth() + 1).padStart(2, '0'),
+    year: String(d.getFullYear()),
+  };
+}
+
+function buildDeadline(day, month, year) {
+  const d = Number(day);
+  const m = Number(month);
+  const y = Number(year);
+  if (!d || !m || !y) return null;
+  const date = new Date(y, m - 1, d);
+  if (isNaN(date.getTime())) return null;
+  if (date.getDate() !== d || date.getMonth() !== m - 1 || date.getFullYear() !== y) return null;
+  return date.getTime();
+}
+
+function normalizeToDay(ts) {
+  const d = new Date(ts);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
 function ensureHtml(text) {
   if (!text) return '';
   return isHtml(text) ? text : markdownToHtml(text);
@@ -78,6 +105,12 @@ export function TicketDetail() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState('');
 
+  const [hasDeadline, setHasDeadline] = useState(!!ticket?.deadline);
+  const [deadlineDay, setDeadlineDay] = useState('');
+  const [deadlineMonth, setDeadlineMonth] = useState('');
+  const [deadlineYear, setDeadlineYear] = useState('');
+  const [deadlineError, setDeadlineError] = useState('');
+
   useEffect(() => {
     if (ticket) {
       setLocalTitle(ticket.title);
@@ -86,6 +119,12 @@ export function TicketDetail() {
         updateTicket(ticket.id, { description: desc });
       }
       setLocalDescription(desc);
+      const dl = parseDeadline(ticket.deadline);
+      setHasDeadline(!!ticket.deadline);
+      setDeadlineDay(dl.day);
+      setDeadlineMonth(dl.month);
+      setDeadlineYear(dl.year);
+      setDeadlineError('');
     }
   }, [ticket?.id]);
 
@@ -131,9 +170,33 @@ export function TicketDetail() {
     scheduleUpdate();
   };
 
-  const handleDeadlineChange = (e) => {
-    const deadline = fromDateInputValue(e.target.value);
+  const validateAndSaveDeadline = (day, month, year, enabled) => {
+    if (!enabled) {
+      updateTicket(ticket.id, { deadline: null });
+      setDeadlineError('');
+      return;
+    }
+    const deadline = buildDeadline(day, month, year);
+    if (!deadline) {
+      setDeadlineError(t('ticket.deadlineInvalid'));
+      return;
+    }
+    if (deadline < normalizeToDay(ticket.createdAt)) {
+      setDeadlineError(t('ticket.deadlineBeforeCreation'));
+      return;
+    }
+    setDeadlineError('');
     updateTicket(ticket.id, { deadline });
+  };
+
+  const handleDeadlineToggle = (enabled) => {
+    setHasDeadline(enabled);
+    if (!enabled) {
+      updateTicket(ticket.id, { deadline: null });
+      setDeadlineError('');
+    } else {
+      validateAndSaveDeadline(deadlineDay, deadlineMonth, deadlineYear, true);
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -212,7 +275,7 @@ export function TicketDetail() {
               value={localTitle}
               onChange={handleTitleChange}
               onBlur={flushUpdate}
-              className="font-bold text-lg bg-transparent border-none px-0 py-0 focus:ring-0 w-full"
+              className="font-bold text-lg bg-transparent border-none px-0 py-0 focus:ring-0 w-full font-neutra"
             />
           </div>
           <div className="flex items-center gap-1 shrink-0">
@@ -262,13 +325,72 @@ export function TicketDetail() {
               </div>
             </div>
             <div>
-              <label className="block text-xs text-kb-text-secondary mb-1.5 uppercase tracking-wide">{t('ticket.deadline')}</label>
-              <input
-                type="date"
-                value={toDateInputValue(ticket.deadline)}
-                onChange={handleDeadlineChange}
-                className="w-full bg-kb-bg border border-kb-border rounded-lg px-3 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary [color-scheme:dark]"
-              />
+              <label className="flex items-center gap-2 text-xs text-kb-text-secondary mb-1.5 uppercase tracking-wide cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasDeadline}
+                  onChange={(e) => handleDeadlineToggle(e.target.checked)}
+                  className="accent-kb-text-secondary"
+                />
+                {t('ticket.deadline')}
+              </label>
+              {hasDeadline && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      placeholder="DD"
+                      value={deadlineDay}
+                      onChange={(e) => {
+                        setDeadlineDay(e.target.value);
+                        validateAndSaveDeadline(e.target.value, deadlineMonth, deadlineYear, true);
+                      }}
+                      className="w-14 bg-kb-bg border border-kb-border rounded-lg px-2 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary text-center"
+                    />
+                    <span className="text-kb-text-secondary">/</span>
+                    <select
+                      value={deadlineMonth}
+                      onChange={(e) => {
+                        setDeadlineMonth(e.target.value);
+                        validateAndSaveDeadline(deadlineDay, e.target.value, deadlineYear, true);
+                      }}
+                      className="w-24 bg-kb-bg border border-kb-border rounded-lg px-2 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary"
+                    >
+                      <option value="">Mes</option>
+                      <option value="01">Enero</option>
+                      <option value="02">Febrero</option>
+                      <option value="03">Marzo</option>
+                      <option value="04">Abril</option>
+                      <option value="05">Mayo</option>
+                      <option value="06">Junio</option>
+                      <option value="07">Julio</option>
+                      <option value="08">Agosto</option>
+                      <option value="09">Septiembre</option>
+                      <option value="10">Octubre</option>
+                      <option value="11">Noviembre</option>
+                      <option value="12">Diciembre</option>
+                    </select>
+                    <span className="text-kb-text-secondary">/</span>
+                    <input
+                      type="number"
+                      min="1900"
+                      max="9999"
+                      placeholder="AAAA"
+                      value={deadlineYear}
+                      onChange={(e) => {
+                        setDeadlineYear(e.target.value);
+                        validateAndSaveDeadline(deadlineDay, deadlineMonth, e.target.value, true);
+                      }}
+                      className="w-20 bg-kb-bg border border-kb-border rounded-lg px-2 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary text-center"
+                    />
+                  </div>
+                  {deadlineError && (
+                    <p className="text-xs text-red-400 mt-1">{deadlineError}</p>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
@@ -286,7 +408,22 @@ export function TicketDetail() {
           {/* Imágenes */}
           <div>
             <label className="block text-xs text-kb-text-secondary mb-1.5 uppercase tracking-wide">Imágenes</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div
+              className="grid grid-cols-2 gap-2"
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+                files.forEach((file) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateTicket(ticket.id, { images: [...ticket.images, reader.result] });
+                  };
+                  reader.readAsDataURL(file);
+                });
+              }}
+            >
               {ticket.images.map((img, idx) => (
                 <div key={idx} className="relative group rounded-lg overflow-hidden border border-kb-border">
                   <img src={img} alt={`Imagen ${idx + 1}`} className="w-full h-32 object-cover" />
@@ -343,7 +480,6 @@ export function TicketDetail() {
                     <>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold mb-1">{t('ticket.author')}</p>
                           <div
                             className="rich-text text-sm text-kb-text leading-relaxed"
                             dangerouslySetInnerHTML={{ __html: ensureHtml(comment.text) }}

@@ -1,43 +1,16 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
-
-@font-face {
-  font-family: 'Neutra Text';
-  src: url('/Fonts/neutra-text-light-5872613aeda5b.otf') format('opentype');
-  font-weight: 300;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Neutra Text';
-  src: url('/Fonts/neutra-text-tf-5871e0b0704ed.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Neutra Text';
-  src: url('/Fonts/neutra-text-alt-587261020eccb.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Neutra Text';
-  src: url('/Fonts/neutra-text-bold-5871e1605afa2.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Neutra Text';
-  src: url('/Fonts/neutra-text-bold-italic-5872615974382.otf') format('opentype');
-  font-weight: 700;
-  font-style: italic;
-}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 @layer base {
   html, body, #root {
     @apply h-full w-full;
     background-color: #0F0F0F;
     color: #FFFFFF;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-neutra {
     font-family: 'Neutra Text', system-ui, -apple-system, sans-serif;
   }
 

@@ -3,7 +3,7 @@ import { useBoardStore } from '../store/boardStore';
 import { t } from '../i18n';
 import { Button } from './ui/Button';
 import { CreateBoardModal } from './CreateBoardModal';
-import { Layout, Plus, ArrowRight } from 'lucide-react';
+import { Layout, ArrowRight } from 'lucide-react';
 
 function formatDate(timestamp) {
   if (!timestamp) return '';

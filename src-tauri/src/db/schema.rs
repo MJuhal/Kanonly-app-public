@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS columns (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     board_id TEXT NOT NULL,
-    sort_order INTEGER NOT NULL
+    sort_order INTEGER NOT NULL,
+    color TEXT
 );
 
 CREATE TABLE IF NOT EXISTS tickets (
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS notes (
     links TEXT,
     images TEXT,
     priority TEXT,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS column_ticket_order (

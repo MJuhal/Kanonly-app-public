@@ -7,6 +7,38 @@ pub fn init_db(conn: &Connection) -> Result<(), String> {
     Ok(())
 }
 
+pub fn run_migrations(conn: &Connection) -> Result<(), String> {
+    // Migration 1: add color to columns
+    let has_color: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('columns') WHERE name = 'color'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(0) > 0;
+    if !has_color {
+        conn.execute("ALTER TABLE columns ADD COLUMN color TEXT", [])
+            .map_err(|e| format!("Failed to add color column: {}", e))?;
+        log::info!("Migration: added 'color' column to columns table");
+    }
+
+    // Migration 2: add sort_order to notes
+    let has_sort: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('notes') WHERE name = 'sort_order'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(0) > 0;
+    if !has_sort {
+        conn.execute("ALTER TABLE notes ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0", [])
+            .map_err(|e| format!("Failed to add sort_order column: {}", e))?;
+        log::info!("Migration: added 'sort_order' column to notes table");
+    }
+
+    Ok(())
+}
+
 pub fn load_all_data(conn: &Connection) -> Result<AppData, String> {
     let mut stmt = conn
         .prepare("SELECT id, name, created_at, ticket_counter FROM boards ORDER BY created_at")
@@ -26,7 +58,7 @@ pub fn load_all_data(conn: &Connection) -> Result<AppData, String> {
     drop(stmt);
 
     let mut stmt = conn
-        .prepare("SELECT id, title, board_id, sort_order FROM columns ORDER BY board_id, sort_order")
+        .prepare("SELECT id, title, board_id, sort_order, color FROM columns ORDER BY board_id, sort_order")
         .map_err(|e| e.to_string())?;
     let mut columns: Vec<Column> = stmt
         .query_map([], |row| {
@@ -36,6 +68,7 @@ pub fn load_all_data(conn: &Connection) -> Result<AppData, String> {
                 board_id: row.get(2)?,
                 order: row.get(3)?,
                 ticket_ids: Vec::new(),
+                color: row.get(4)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -119,7 +152,7 @@ pub fn load_all_data(conn: &Connection) -> Result<AppData, String> {
     }
 
     let mut stmt = conn
-        .prepare("SELECT id, title, description, links, images, priority, created_at FROM notes ORDER BY created_at DESC")
+        .prepare("SELECT id, title, description, links, images, priority, created_at, sort_order FROM notes ORDER BY sort_order, created_at DESC")
         .map_err(|e| e.to_string())?;
     let notes: Vec<Note> = stmt
         .query_map([], |row| {
@@ -134,6 +167,7 @@ pub fn load_all_data(conn: &Connection) -> Result<AppData, String> {
                 images: images_json.and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_default(),
                 priority,
                 created_at: row.get::<_, i64>(6)? as u64,
+                sort_order: row.get(7)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -191,8 +225,8 @@ fn insert_all(tx: &Transaction, data: &AppData) -> Result<(), String> {
 
     for col in &data.columns {
         tx.execute(
-            "INSERT INTO columns (id, title, board_id, sort_order) VALUES (?1, ?2, ?3, ?4)",
-            params![col.id, col.title, col.board_id, col.order],
+            "INSERT INTO columns (id, title, board_id, sort_order, color) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![col.id, col.title, col.board_id, col.order, col.color.as_deref()],
         )
         .map_err(|e| e.to_string())?;
 
@@ -247,7 +281,7 @@ fn insert_all(tx: &Transaction, data: &AppData) -> Result<(), String> {
         let images_json = serde_json::to_string(&note.images).unwrap_or_else(|_| "[]".to_string());
 
         tx.execute(
-            "INSERT INTO notes (id, title, description, links, images, priority, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT INTO notes (id, title, description, links, images, priority, created_at, sort_order) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 note.id,
                 note.title,
@@ -255,7 +289,8 @@ fn insert_all(tx: &Transaction, data: &AppData) -> Result<(), String> {
                 links_json,
                 images_json,
                 note.priority.as_deref(),
-                note.created_at as i64
+                note.created_at as i64,
+                note.sort_order
             ],
         )
         .map_err(|e| e.to_string())?;

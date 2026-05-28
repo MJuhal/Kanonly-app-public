@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { Bold, Italic, Strikethrough, Code, FileCode } from 'lucide-react';
+import { useRef, useEffect, useCallback, useState } from 'react';
+import { Bold, Italic, Strikethrough, Code, FileCode, GripHorizontal } from 'lucide-react';
 
 function insertHtmlAtCursor(html) {
   const selection = window.getSelection();
@@ -15,7 +15,12 @@ function insertHtmlAtCursor(html) {
 
 export function RichTextEditor({ value, onChange, onBlur, placeholder }) {
   const ref = useRef(null);
+  const containerRef = useRef(null);
   const isComposing = useRef(false);
+  const [editorHeight, setEditorHeight] = useState(200);
+  const isDragging = useRef(false);
+  const startY = useRef(0);
+  const startHeight = useRef(200);
 
   // Sincronizar valor externo con el div
   useEffect(() => {
@@ -60,7 +65,7 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder }) {
       case 'codeBlock': {
         const sel2 = window.getSelection();
         const text2 = sel2.toString();
-        insertHtmlAtCursor(`<pre><code>${text2 || 'Escribí tu código aquí...'}</code></pre><br>`);
+        insertHtmlAtCursor(`<pre><code>${text2 || 'Escribí tu código aquí...'}</code></pre><div><br></div>`);
         break;
       }
       default:
@@ -94,8 +99,29 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder }) {
     emit();
   };
 
+  const startResize = (e) => {
+    isDragging.current = true;
+    startY.current = e.clientY;
+    startHeight.current = editorHeight;
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', stopResize);
+  };
+
+  const handleResizeMove = (e) => {
+    if (!isDragging.current) return;
+    const delta = e.clientY - startY.current;
+    const newHeight = Math.max(120, startHeight.current + delta);
+    setEditorHeight(newHeight);
+  };
+
+  const stopResize = () => {
+    isDragging.current = false;
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', stopResize);
+  };
+
   return (
-    <div>
+    <div ref={containerRef}>
       {/* Toolbar */}
       <div className="flex items-center gap-1 mb-2">
         <button
@@ -136,19 +162,28 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder }) {
       </div>
 
       {/* Editor */}
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onBlur={onBlur}
-        onKeyDown={handleKeyDown}
-        onCompositionStart={() => { isComposing.current = true; }}
-        onCompositionEnd={() => { isComposing.current = false; emit(); }}
-        data-placeholder={placeholder}
-        className="rich-text w-full min-h-[200px] bg-kb-card border border-kb-border rounded-lg px-3 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary transition-colors overflow-y-auto"
-        style={{ maxHeight: '400px' }}
-      />
+      <div className="relative">
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onBlur={onBlur}
+          onKeyDown={handleKeyDown}
+          onCompositionStart={() => { isComposing.current = true; }}
+          onCompositionEnd={() => { isComposing.current = false; emit(); }}
+          data-placeholder={placeholder}
+          className="rich-text w-full bg-kb-card border border-kb-border rounded-lg px-3 py-2 text-sm text-kb-text focus:outline-none focus:border-kb-text-secondary transition-colors"
+          style={{ minHeight: `${editorHeight}px` }}
+        />
+        <div
+          onMouseDown={startResize}
+          className="absolute bottom-0 right-0 p-1 cursor-ns-resize text-kb-text-secondary/40 hover:text-kb-text-secondary transition-colors select-none"
+          title="Arrastrar para redimensionar"
+        >
+          <GripHorizontal size={12} />
+        </div>
+      </div>
     </div>
   );
 }

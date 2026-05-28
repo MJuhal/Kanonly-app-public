@@ -5,13 +5,25 @@ import { Input } from './ui/Input';
 import { RichTextEditor } from './RichTextEditor';
 import { isHtml, markdownToHtml } from '../lib/htmlHelpers';
 import { ConfirmModal } from './ConfirmModal';
-import { X, Trash2, Image } from 'lucide-react';
+import { X, Trash2, Image, Check, Pencil } from 'lucide-react';
 
 function extractUrls(text) {
   if (!text) return [];
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
   const matches = text.match(urlRegex) || [];
   return [...new Set(matches)];
+}
+
+function formatDateTime(timestamp) {
+  if (!timestamp) return '';
+  const d = new Date(timestamp);
+  if (isNaN(d.getTime())) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function LinkList({ urls }) {
@@ -40,6 +52,9 @@ export function NoteDetail() {
   const closeNoteDetail = useBoardStore((s) => s.closeNoteDetail);
   const updateNote = useBoardStore((s) => s.updateNote);
   const deleteNote = useBoardStore((s) => s.deleteNote);
+  const addNoteComment = useBoardStore((s) => s.addNoteComment);
+  const updateNoteComment = useBoardStore((s) => s.updateNoteComment);
+  const deleteNoteComment = useBoardStore((s) => s.deleteNoteComment);
 
   const note = notes.find((n) => n.id === selectedNoteId);
   const fileInputRef = useRef(null);
@@ -48,6 +63,10 @@ export function NoteDetail() {
   const [localTitle, setLocalTitle] = useState('');
   const [localDescription, setLocalDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState('');
 
   function ensureHtml(text) {
     if (!text) return '';
@@ -129,6 +148,43 @@ export function NoteDetail() {
     closeNoteDetail();
   };
 
+  const linkify = (html) => {
+    const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+|www\.[^\s<>"{}|\\^`\[\]]+\.[^\s<>"{}|\\^`\[\]]+)/g;
+    return html.replace(urlRegex, (url) => {
+      const href = url.startsWith('http') ? url : `https://${url}`;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+  };
+
+  const handleAddComment = () => {
+    const text = newComment.trim();
+    if (!text || text === '<br>') return;
+    addNoteComment(note.id, linkify(text));
+    setNewComment('');
+  };
+
+  const startEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentText(ensureHtml(comment.text));
+  };
+
+  const saveEditComment = () => {
+    const text = editCommentText.trim();
+    if (!text || text === '<br>') return;
+    updateNoteComment(note.id, editingCommentId, linkify(text));
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  const handleDeleteComment = (commentId) => {
+    deleteNoteComment(note.id, commentId);
+  };
+
   const detectedUrls = extractUrls(localDescription);
   const allUrls = [...new Set([...(note.links || []), ...detectedUrls])];
 
@@ -147,7 +203,7 @@ export function NoteDetail() {
               value={localTitle}
               onChange={handleTitleChange}
               onBlur={flushUpdate}
-              className="font-bold text-lg bg-transparent border-none px-0 py-0 focus:ring-0 w-full"
+              className="font-bold text-lg bg-transparent border-none px-0 py-0 focus:ring-0 w-full font-neutra"
             />
           </div>
           <div className="flex items-center gap-1 shrink-0">
@@ -203,7 +259,22 @@ export function NoteDetail() {
             <label className="block text-xs text-kb-text-secondary mb-1.5 uppercase tracking-wide">
               Imágenes
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div
+              className="grid grid-cols-2 gap-2"
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+                files.forEach((file) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateNote(note.id, { images: [...note.images, reader.result] });
+                  };
+                  reader.readAsDataURL(file);
+                });
+              }}
+            >
               {note.images.map((img, idx) => (
                 <div key={idx} className="relative group rounded-lg overflow-hidden border border-kb-border">
                   <img
@@ -234,6 +305,94 @@ export function NoteDetail() {
               className="hidden"
               onChange={handleImageUpload}
             />
+          </div>
+
+          {/* Comentarios */}
+          <div className="pt-4 border-t border-kb-border">
+            <label className="block text-xs text-kb-text-secondary mb-3 uppercase tracking-wide">Comentarios</label>
+
+            <div className="space-y-3 mb-4">
+              {(note.comments || []).map((comment) => (
+                <div key={comment.id} className="bg-kb-bg border border-kb-border rounded-lg p-4 group">
+                  {editingCommentId === comment.id ? (
+                    <div className="space-y-2">
+                      <RichTextEditor
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        placeholder={t('ticket.editCommentPlaceholder')}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={cancelEditComment}
+                          className="px-3 py-1.5 text-xs text-kb-text-secondary hover:text-kb-text rounded hover:bg-kb-hover transition-colors"
+                        >
+                          {t('ticket.cancel')}
+                        </button>
+                        <button
+                          onClick={saveEditComment}
+                          className="px-3 py-1.5 text-xs font-medium text-black bg-white rounded hover:bg-gray-200 transition-colors"
+                        >
+                          <Check size={12} className="inline mr-1" />
+                          {t('ticket.save')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="rich-text text-sm text-kb-text leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: ensureHtml(comment.text) }}
+                          />
+                          <p className="text-xs text-kb-text-secondary mt-2">
+                            {formatDateTime(comment.updatedAt || comment.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button
+                            onClick={() => startEditComment(comment)}
+                            className="p-1.5 text-kb-text-secondary hover:text-kb-text rounded hover:bg-kb-hover transition-colors"
+                            title={t('ticket.editTooltip')}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="p-1.5 text-kb-text-secondary hover:text-red-400 rounded hover:bg-kb-hover transition-colors"
+                            title={t('ticket.deleteCommentTooltip')}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {(!note.comments || note.comments.length === 0) && (
+                <p className="text-sm text-kb-text-secondary italic">{t('ticket.noComments')}</p>
+              )}
+            </div>
+
+            {/* Nuevo comentario */}
+            <div className="space-y-2">
+              <RichTextEditor
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={t('ticket.newCommentPlaceholder')}
+              />
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || newComment.trim() === '<br>'}
+                  className="px-4 py-2 text-sm font-medium bg-kb-text text-black rounded-lg hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {t('ticket.addComment')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

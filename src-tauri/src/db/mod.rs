@@ -6,7 +6,7 @@ pub mod queries;
 pub mod schema;
 
 use crate::db::models::AppData;
-use crate::db::queries::{init_db, load_all_data, save_all_data};
+use crate::db::queries::{init_db, load_all_data, save_all_data, run_migrations};
 
 const DB_FILE: &str = "miikanban.db";
 const DATA_DIR: &str = "data";
@@ -61,6 +61,7 @@ pub fn ensure_db_initialized() -> Result<rusqlite::Connection, String> {
         init_db(&mut conn)?;
         log::debug!("DB schema initialized");
     }
+    run_migrations(&conn)?;
     Ok(conn)
 }
 

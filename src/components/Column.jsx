@@ -5,14 +5,18 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { TicketCard } from './TicketCard';
 import { CreateTicketModal } from './CreateTicketModal';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
+import { Plus, Trash2, GripVertical, Palette } from 'lucide-react';
+import { t } from '../i18n';
 import { useBoardStore } from '../store/boardStore';
 
 export function Column({ column, tickets }) {
   const createTicket = useBoardStore((s) => s.createTicket);
   const deleteColumn = useBoardStore((s) => s.deleteColumn);
+  const updateColumn = useBoardStore((s) => s.updateColumn);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Sortable para reordenar columnas (drag handle en el header)
   const {
@@ -37,20 +41,17 @@ export function Column({ column, tickets }) {
   };
 
   const handleDelete = () => {
-    if (confirmDelete) {
+    if (tickets.length === 0) {
       deleteColumn(column.id);
     } else {
-      setConfirmDelete(true);
-      setTimeout(() => setConfirmDelete(false), 2000);
+      setShowConfirmDelete(true);
     }
   };
 
-  const getTitleColor = () => {
-    const t = column.title.toUpperCase();
-    if (t.includes('PROGRESS')) return 'text-kb-inprogress';
-    if (t.includes('COMPLETE') || t.includes('DONE')) return 'text-kb-complete';
-    return 'text-kb-text';
-  };
+  const columnColors = [
+    '#FFFFFF', '#E5A853', '#4ADE80', '#EF4444', '#60A5FA',
+    '#A78BFA', '#FB923C', '#F472B6', '#22D3EE', '#888888',
+  ];
 
   return (
     <div
@@ -69,11 +70,38 @@ export function Column({ column, tickets }) {
           >
             <GripVertical size={16} />
           </button>
-          <h3 className={`text-sm font-bold uppercase tracking-wide truncate ${getTitleColor()}`}>
+          <h3
+            className="text-sm font-bold uppercase tracking-wide truncate"
+            style={{ color: column.color || '#FFFFFF' }}
+          >
             {column.title}
           </h3>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 relative">
+          <div className="relative">
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="p-1 text-kb-text-secondary hover:text-kb-text rounded transition-colors"
+              title="Cambiar color"
+            >
+              <Palette size={14} />
+            </button>
+            {showColorPicker && (
+              <div className="absolute top-8 right-0 bg-kb-card border border-kb-border rounded-lg p-2 flex flex-wrap gap-[8px] z-20 shadow-xl w-[114px] items-start">
+                {columnColors.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      updateColumn(column.id, { color: c });
+                      setShowColorPicker(false);
+                    }}
+                    className="w-4 h-4 rounded-[4px] border border-kb-border hover:scale-110 transition-transform"
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+          )}
+          </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="p-1 text-kb-text-secondary hover:text-kb-text rounded transition-colors"
@@ -82,9 +110,7 @@ export function Column({ column, tickets }) {
           </button>
           <button
             onClick={handleDelete}
-            className={`p-1 rounded transition-colors ${
-              confirmDelete ? 'text-red-400' : 'text-kb-text-secondary hover:text-red-400'
-            }`}
+            className="p-1 rounded transition-colors text-kb-text-secondary hover:text-red-400"
           >
             <Trash2 size={16} />
           </button>
@@ -94,7 +120,7 @@ export function Column({ column, tickets }) {
       {/* Área droppable para tickets */}
       <div
         ref={setDroppableRef}
-        className={`space-y-2 pr-1 rounded-lg transition-colors ${
+        className={`flex-1 space-y-2 pr-1 rounded-lg transition-colors min-h-[120px] ${
           isOver ? 'bg-kb-hover/50' : ''
         }`}
       >
@@ -114,6 +140,16 @@ export function Column({ column, tickets }) {
         )}
       </div>
 
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title={t('column.deleteConfirmTitle')}
+        message={t('column.deleteConfirmMessage')}
+        onConfirm={() => {
+          deleteColumn(column.id);
+          setShowConfirmDelete(false);
+        }}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
       <CreateTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -32,8 +32,8 @@ export function BoardView() {
   const [searchInput, setSearchInput] = useState('');
 
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { distance: 5 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
   const currentBoard = useMemo(
@@ -64,7 +64,6 @@ export function BoardView() {
     const q = query;
     return (
       ticket.title.toLowerCase().includes(q) ||
-      ticket.description.toLowerCase().includes(q) ||
       ticket.id.toLowerCase().includes(q) ||
       (ticket.displayId || '').toLowerCase().includes(q)
     );
@@ -93,8 +92,12 @@ export function BoardView() {
     const dragType = active.data?.current?.type;
 
     if (dragType === 'Column') {
+      let overColumnId = over.id;
+      if (typeof overColumnId === 'string' && overColumnId.endsWith('-drop')) {
+        overColumnId = overColumnId.slice(0, -5);
+      }
       const oldIndex = boardColumns.findIndex((c) => c.id === active.id);
-      const newIndex = boardColumns.findIndex((c) => c.id === over.id);
+      const newIndex = boardColumns.findIndex((c) => c.id === overColumnId);
       if (oldIndex === -1 || newIndex === -1) return;
       const newOrder = [...boardColumns];
       const [moved] = newOrder.splice(oldIndex, 1);
@@ -280,7 +283,7 @@ export function BoardView() {
       <CreateColumnModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={(title) => createColumn(currentBoard.id, title)}
+        onCreate={(title, color) => createColumn(currentBoard.id, title, color)}
       />
     </div>
   );

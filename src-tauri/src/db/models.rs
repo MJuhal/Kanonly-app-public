@@ -17,6 +17,7 @@ pub struct Column {
     pub board_id: String,
     pub order: i32,
     pub ticket_ids: Vec<String>,
+    pub color: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -55,6 +56,7 @@ pub struct Note {
     pub images: Vec<String>,
     pub priority: Option<String>,
     pub created_at: u64,
+    pub sort_order: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
