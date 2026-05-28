@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+src-tauri/target/
+src-tauri/gen/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# App data (local user data)
+src-tauri/data/
+
+# Secrets / Certificates
+*.pfx
+*.pem
+*.key
+.env
+.env.*
+
+# Logs
+*.log

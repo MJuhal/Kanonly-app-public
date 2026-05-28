@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@font-face {
+  font-family: 'Neutra Text';
+  src: url('/Fonts/neutra-text-light-5872613aeda5b.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Neutra Text';
+  src: url('/Fonts/neutra-text-tf-5871e0b0704ed.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Neutra Text';
+  src: url('/Fonts/neutra-text-alt-587261020eccb.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Neutra Text';
+  src: url('/Fonts/neutra-text-bold-5871e1605afa2.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Neutra Text';
+  src: url('/Fonts/neutra-text-bold-italic-5872615974382.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@layer base {
+  html, body, #root {
+    @apply h-full w-full;
+    background-color: #0F0F0F;
+    color: #FFFFFF;
+    font-family: 'Neutra Text', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Rich text editor styles */
+  .rich-text:empty::before {
+    content: attr(data-placeholder);
+    color: #6b7280;
+    pointer-events: none;
+  }
+  .rich-text b, .rich-text strong { font-weight: 700; color: #ffffff; }
+  .rich-text i, .rich-text em { font-style: italic; }
+  .rich-text strike, .rich-text s { text-decoration: line-through; opacity: 0.7; }
+  .rich-text code.inline-code { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; color: #fde047; }
+  .rich-text pre { background: #1a1a1a; border: 1px solid #2A2A2A; border-radius: 8px; padding: 12px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; margin: 8px 0; }
+  .rich-text pre code { background: transparent; padding: 0; color: #e5e5e5; }
+  .rich-text a { color: #60a5fa; text-decoration: underline; }
+  .rich-text ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+  .rich-text ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+  .rich-text blockquote { border-left: 3px solid #3A3A3A; padding-left: 12px; margin: 8px 0; color: #9ca3af; font-style: italic; }
+
+  /* Scrollbar oscuro */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0F0F0F;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2A2A2A;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3A3A3A;
+  }
+}
