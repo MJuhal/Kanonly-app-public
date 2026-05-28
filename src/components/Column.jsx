@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TicketCard } from './TicketCard';
 import { CreateTicketModal } from './CreateTicketModal';
 import { ConfirmModal } from './ConfirmModal';
-import { Plus, Trash2, GripVertical, Palette } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { t } from '../i18n';
 import { useBoardStore } from '../store/boardStore';
 
@@ -16,8 +16,6 @@ export function Column({ column, tickets }) {
   const updateColumn = useBoardStore((s) => s.updateColumn);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-
   // Sortable para reordenar columnas (drag handle en el header)
   const {
     attributes,
@@ -48,10 +46,11 @@ export function Column({ column, tickets }) {
     }
   };
 
-  const columnColors = [
-    '#FFFFFF', '#E5A853', '#4ADE80', '#EF4444', '#60A5FA',
-    '#A78BFA', '#FB923C', '#F472B6', '#22D3EE', '#888888',
-  ];
+  const allTickets = useBoardStore((s) => s.tickets);
+  const boardTicketCount = allTickets.filter((t) => {
+    const col = useBoardStore.getState().columns.find((c) => c.id === t.columnId);
+    return col && col.boardId === column.boardId;
+  }).length;
 
   return (
     <div
@@ -70,41 +69,21 @@ export function Column({ column, tickets }) {
           >
             <GripVertical size={16} />
           </button>
-          <h3
-            className="text-sm font-bold uppercase tracking-wide truncate"
-            style={{ color: column.color || '#FFFFFF' }}
-          >
+          <h3 className="text-sm font-bold uppercase tracking-wide truncate text-white">
             {column.title}
           </h3>
         </div>
         <div className="flex items-center gap-1 shrink-0 relative">
-          <div className="relative">
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-1 text-kb-text-secondary hover:text-kb-text rounded transition-colors"
-              title="Cambiar color"
-            >
-              <Palette size={14} />
-            </button>
-            {showColorPicker && (
-              <div className="absolute top-8 right-0 bg-kb-card border border-kb-border rounded-lg p-2 flex flex-wrap gap-[8px] z-20 shadow-xl w-[114px] items-start">
-                {columnColors.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => {
-                      updateColumn(column.id, { color: c });
-                      setShowColorPicker(false);
-                    }}
-                    className="w-4 h-4 rounded-[4px] border border-kb-border hover:scale-110 transition-transform"
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-          )}
-          </div>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="p-1 text-kb-text-secondary hover:text-kb-text rounded transition-colors"
+            onClick={() => {
+              if (boardTicketCount < 10) setIsModalOpen(true);
+            }}
+            className={`p-1 rounded transition-colors ${
+              boardTicketCount >= 10
+                ? 'text-kb-text-secondary/30 cursor-not-allowed'
+                : 'text-kb-text-secondary hover:text-kb-text'
+            }`}
+            title={boardTicketCount >= 10 ? 'Límite: 10 tickets en la versión gratuita' : 'Nuevo ticket'}
           >
             <Plus size={18} />
           </button>

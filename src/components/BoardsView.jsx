@@ -50,11 +50,17 @@ export function BoardsView() {
       <div className="sticky top-0 z-20 bg-[#0F0F0F] px-8 py-6 flex items-center justify-between gap-4 border-b border-kb-border">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold">{t('boards.title')}</h2>
+          <span className="text-xs text-kb-text-secondary bg-kb-card border border-kb-border px-2 py-1 rounded-md">
+            {boards.length} / 1
+          </span>
         </div>
         <Button
           variant="primary"
           className="text-[16px]"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            if (boards.length < 1) setIsModalOpen(true);
+          }}
+          disabled={boards.length >= 1}
         >
           {t('boards.newBoard')}
         </Button>
