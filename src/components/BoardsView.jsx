@@ -30,14 +30,10 @@ export function BoardsView() {
       const boardTickets = tickets.filter((t) => boardColumnIds.includes(t.columnId));
       const ticketCount = boardTickets.length;
 
-      // Última modificación: max entre createdAt de tickets y updatedAt de comentarios
+      // Última modificación: max entre createdAt de tickets
       let lastMod = board.createdAt || 0;
       boardTickets.forEach((t) => {
         if (t.createdAt > lastMod) lastMod = t.createdAt;
-        (t.comments || []).forEach((c) => {
-          if (c.updatedAt > lastMod) lastMod = c.updatedAt;
-          if (c.createdAt > lastMod) lastMod = c.createdAt;
-        });
       });
 
       return { ...board, ticketCount, lastMod };

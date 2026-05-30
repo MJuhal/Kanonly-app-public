@@ -27,25 +27,6 @@ CREATE TABLE IF NOT EXISTS tickets (
     deadline INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS comments (
-    id TEXT PRIMARY KEY,
-    ticket_id TEXT NOT NULL,
-    text TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS notes (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT,
-    links TEXT,
-    images TEXT,
-    priority TEXT,
-    created_at INTEGER NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0
-);
-
 CREATE TABLE IF NOT EXISTS column_ticket_order (
     column_id TEXT NOT NULL,
     ticket_id TEXT NOT NULL,

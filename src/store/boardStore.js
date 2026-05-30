@@ -30,10 +30,8 @@ function getInitialData() {
       { id: col3, title: 'COMPLETE', boardId, order: 2, ticketIds: [t4.id] },
     ],
     tickets: [t1, t2, t3, t4],
-    notes: [],
     selectedBoardId: boardId,
     selectedTicketId: null,
-    selectedNoteId: null,
     view: 'home',
     history: [],
     initialized: false,
@@ -46,7 +44,6 @@ function buildSnapshot(state) {
     boards: JSON.parse(JSON.stringify(state.boards)),
     columns: JSON.parse(JSON.stringify(state.columns)),
     tickets: JSON.parse(JSON.stringify(state.tickets)),
-    notes: JSON.parse(JSON.stringify(state.notes)),
   };
 }
 
@@ -64,7 +61,7 @@ export const useBoardStore = create((set, get) => {
         nextState = { ...nextState, history: newHistory };
       }
 
-      const { selectedTicketId, selectedNoteId, initialized, history, ...toSave } = nextState;
+      const { selectedTicketId, initialized, history, ...toSave } = nextState;
       saveData(toSave);
       return nextState;
     });
@@ -91,9 +88,7 @@ export const useBoardStore = create((set, get) => {
         boards: boardsWithCounter,
         columns: data.columns || state.columns,
         tickets: data.tickets || state.tickets,
-        notes: data.notes || [],
         selectedTicketId: null,
-        selectedNoteId: null,
         initialized: true,
         loadError: null,
       }));
@@ -119,19 +114,17 @@ export const useBoardStore = create((set, get) => {
           boards: lastSnapshot.boards,
           columns: lastSnapshot.columns,
           tickets: lastSnapshot.tickets,
-          notes: lastSnapshot.notes,
           history: newHistory,
           selectedTicketId: null,
-          selectedNoteId: null,
         };
 
-        const { selectedTicketId, selectedNoteId, initialized, history, ...toSave } = newState;
+        const { selectedTicketId, initialized, history, ...toSave } = newState;
         saveData(toSave);
         return newState;
       });
     },
 
-    setView: (view) => set({ view, selectedTicketId: null, selectedNoteId: null }),
+    setView: (view) => set({ view, selectedTicketId: null }),
 
     selectBoard: (boardId) => set({ selectedBoardId: boardId, view: 'boards' }),
 
@@ -172,7 +165,7 @@ export const useBoardStore = create((set, get) => {
       });
     },
 
-    createColumn: (boardId, title, color) => {
+    createColumn: (boardId, title) => {
       const boardCols = get().columns.filter((c) => c.boardId === boardId);
       const newCol = {
         id: generateId(),
@@ -180,7 +173,6 @@ export const useBoardStore = create((set, get) => {
         boardId,
         order: boardCols.length,
         ticketIds: [],
-        color: color || null,
       };
       persist((state) => ({
         ...state,
@@ -227,7 +219,6 @@ export const useBoardStore = create((set, get) => {
         priority: 'medium',
         createdAt: Date.now(),
         deadline: null,
-        comments: [],
       };
 
       persist((s) => {
@@ -289,7 +280,6 @@ export const useBoardStore = create((set, get) => {
         displayId: padTicketId(nextNum),
         title: `${original.title} (copia)`,
         createdAt: Date.now(),
-        comments: (original.comments || []).map((c) => ({ ...c, id: generateId() })),
       };
 
       persist((s) => {
@@ -370,147 +360,7 @@ export const useBoardStore = create((set, get) => {
       });
     },
 
-    selectTicket: (ticketId) => set({ selectedTicketId: ticketId, selectedNoteId: null }),
+    selectTicket: (ticketId) => set({ selectedTicketId: ticketId }),
     closeTicketDetail: () => set({ selectedTicketId: null }),
-
-    addComment: (ticketId, text) => {
-      persist((state) => ({
-        ...state,
-        tickets: state.tickets.map((t) =>
-          t.id === ticketId
-            ? {
-                ...t,
-                comments: [
-                  ...(t.comments || []),
-                  { id: generateId(), text, createdAt: Date.now(), updatedAt: Date.now() },
-                ],
-              }
-            : t
-        ),
-      }));
-    },
-
-    updateComment: (ticketId, commentId, text) => {
-      persist((state) => ({
-        ...state,
-        tickets: state.tickets.map((t) =>
-          t.id === ticketId
-            ? {
-                ...t,
-                comments: (t.comments || []).map((c) =>
-                  c.id === commentId ? { ...c, text, updatedAt: Date.now() } : c
-                ),
-              }
-            : t
-        ),
-      }));
-    },
-
-    deleteComment: (ticketId, commentId) => {
-      persist((state) => ({
-        ...state,
-        tickets: state.tickets.map((t) =>
-          t.id === ticketId
-            ? { ...t, comments: (t.comments || []).filter((c) => c.id !== commentId) }
-            : t
-        ),
-      }));
-    },
-
-    // Notas
-    createNote: (title) => {
-      const state = get();
-      const maxSort = state.notes.reduce((max, n) => Math.max(max, n.sortOrder || 0), -1);
-      const newNote = {
-        id: generateId(),
-        title,
-        description: '',
-        links: [],
-        images: [],
-        priority: 'medium',
-        comments: [],
-        createdAt: Date.now(),
-        sortOrder: maxSort + 1,
-      };
-      persist((s) => ({
-        ...s,
-        notes: [...s.notes, newNote],
-      }));
-      return newNote.id;
-    },
-
-    reorderNotes: (orderedIds) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.map((n) => {
-          const idx = orderedIds.indexOf(n.id);
-          return idx >= 0 ? { ...n, sortOrder: idx } : n;
-        }),
-      }));
-    },
-
-    updateNote: (noteId, updates) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.map((n) =>
-          n.id === noteId ? { ...n, ...updates } : n
-        ),
-      }));
-    },
-
-    deleteNote: (noteId) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.filter((n) => n.id !== noteId),
-        selectedNoteId: state.selectedNoteId === noteId ? null : state.selectedNoteId,
-      }));
-    },
-
-    addNoteComment: (noteId, text) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.map((n) =>
-          n.id === noteId
-            ? {
-                ...n,
-                comments: [
-                  ...(n.comments || []),
-                  { id: generateId(), text, createdAt: Date.now(), updatedAt: Date.now() },
-                ],
-              }
-            : n
-        ),
-      }));
-    },
-
-    updateNoteComment: (noteId, commentId, text) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.map((n) =>
-          n.id === noteId
-            ? {
-                ...n,
-                comments: (n.comments || []).map((c) =>
-                  c.id === commentId ? { ...c, text, updatedAt: Date.now() } : c
-                ),
-              }
-            : n
-        ),
-      }));
-    },
-
-    deleteNoteComment: (noteId, commentId) => {
-      persist((state) => ({
-        ...state,
-        notes: state.notes.map((n) =>
-          n.id === noteId
-            ? { ...n, comments: (n.comments || []).filter((c) => c.id !== commentId) }
-            : n
-        ),
-      }));
-    },
-
-    selectNote: (noteId) => set({ selectedNoteId: noteId, selectedTicketId: null }),
-    closeNoteDetail: () => set({ selectedNoteId: null }),
   };
 });

@@ -33,30 +33,6 @@ pub struct Ticket {
     pub priority: Option<String>,
     pub created_at: u64,
     pub deadline: Option<u64>,
-    #[serde(default)]
-    pub comments: Vec<Comment>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Comment {
-    pub id: String,
-    pub text: String,
-    pub created_at: u64,
-    pub updated_at: u64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Note {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub links: Vec<String>,
-    pub images: Vec<String>,
-    pub priority: Option<String>,
-    pub created_at: u64,
-    pub sort_order: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -65,5 +41,4 @@ pub struct AppData {
     pub boards: Vec<Board>,
     pub columns: Vec<Column>,
     pub tickets: Vec<Ticket>,
-    pub notes: Vec<Note>,
 }
