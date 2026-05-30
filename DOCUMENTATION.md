@@ -1,7 +1,7 @@
 # KANONLY Free Demo — Documentación Técnica
 
 **Autor:** Martin Juhal  
-**Versión:** 1.5.0 (Demo Pública)  
+**Versión:** 1.6.1 (Demo Pública)  
 **Fecha:** Mayo 2026  
 **Licencia:** PolyForm Noncommercial 1.0.0
 
@@ -219,6 +219,9 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 ---
 
 ## 10. Build y Distribución
+
+> **Nota:** La versión completa PRO está disponible exclusivamente en [Microsoft Store](https://apps.microsoft.com).
+> Este repo es una demo funcional con límites intencionales.
 
 ```bash
 npm install

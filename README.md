@@ -1,4 +1,4 @@
-# KANONLY — Free Open Source Demo
+# KANONLY — Free Open Source Demo (v1.6.1)
 
 <p align="center">
   <img src="public/logo-text.svg" alt="KANONLY" width="200">
@@ -23,13 +23,13 @@ This is the **free, open-source demo** of KANONLY — a privacy-first, offline K
 
 This public repo contains a **fully functional but limited** version of KANONLY. The complete app with all features is available at [**kanonly.me**](https://www.kanonly.me/).
 
-| Feature | This Repo (Free) | Full App (Donation) |
+| Feature | This Repo (Free) | Full App (Microsoft Store) |
 |---------|------------------|---------------------|
-| Boards | **1 only** | Unlimited |
-| Tickets per board | **10 max** | Unlimited |
-| Notes | ❌ Not included | ✅ Unlimited notes |
-| Ticket comments | ❌ Not included | ✅ Full comments |
-| Column colors | ❌ Not included | ✅ 10-color picker |
+| Boards | **1 only** | ✅ Unlimited |
+| Tickets per board | **10 max** | ✅ Unlimited |
+| Notes | ❌ Not included | ✅ Unlimited |
+| Ticket comments | ❌ Not included | ✅ Included |
+| Column colors | ❌ Not included | ✅ Included |
 | Drag & drop | ✅ Included | ✅ Included |
 | Rich-text editor | ✅ Included | ✅ Included |
 | Undo (Ctrl+Z) | ✅ Included | ✅ Included |
