@@ -3,7 +3,7 @@ import { useBoardStore } from '../store/boardStore';
 import { t } from '../i18n';
 import { Button } from './ui/Button';
 import { CreateBoardModal } from './CreateBoardModal';
-import { Layout, ArrowRight } from 'lucide-react';
+import { Layout, Plus, ArrowRight } from 'lucide-react';
 
 function formatDate(timestamp) {
   if (!timestamp) return '';
@@ -30,10 +30,14 @@ export function BoardsView() {
       const boardTickets = tickets.filter((t) => boardColumnIds.includes(t.columnId));
       const ticketCount = boardTickets.length;
 
-      // Última modificación: max entre createdAt de tickets
+      // Última modificación: max entre createdAt de tickets y updatedAt de comentarios
       let lastMod = board.createdAt || 0;
       boardTickets.forEach((t) => {
         if (t.createdAt > lastMod) lastMod = t.createdAt;
+        (t.comments || []).forEach((c) => {
+          if (c.updatedAt > lastMod) lastMod = c.updatedAt;
+          if (c.createdAt > lastMod) lastMod = c.createdAt;
+        });
       });
 
       return { ...board, ticketCount, lastMod };
@@ -41,22 +45,18 @@ export function BoardsView() {
   }, [boards, columns, tickets]);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col select-none">
       {/* Header sticky */}
       <div className="sticky top-0 z-20 bg-[#0F0F0F] px-8 py-6 flex items-center justify-between gap-4 border-b border-kb-border">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold">{t('boards.title')}</h2>
-          <span className="text-xs text-kb-text-secondary bg-kb-card border border-kb-border px-2 py-1 rounded-md">
-            {boards.length} / 1
-          </span>
         </div>
         <Button
           variant="primary"
           className="text-[16px]"
           onClick={() => {
-            if (boards.length < 1) setIsModalOpen(true);
+            setIsModalOpen(true);
           }}
-          disabled={boards.length >= 1}
         >
           {t('boards.newBoard')}
         </Button>
@@ -72,7 +72,11 @@ export function BoardsView() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Layout size={16} className="text-kb-text-secondary shrink-0" />
+                  {board.icon ? (
+                    <span className="text-lg shrink-0">{board.icon}</span>
+                  ) : (
+                    <Layout size={16} className="text-kb-text-secondary shrink-0" />
+                  )}
                   <h3 className="text-sm font-bold truncate">{board.name}</h3>
                 </div>
                 <ArrowRight

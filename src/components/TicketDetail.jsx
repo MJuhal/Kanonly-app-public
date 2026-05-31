@@ -5,7 +5,7 @@ import { Input } from './ui/Input';
 import { RichTextEditor } from './RichTextEditor';
 import { ConfirmModal } from './ConfirmModal';
 import { isHtml, markdownToHtml } from '../lib/htmlHelpers';
-import { X, Trash2, Image } from 'lucide-react';
+import { X, Trash2, Image, Pencil, Check } from 'lucide-react';
 
 function formatDate(timestamp) {
   if (!timestamp) return '';
@@ -85,7 +85,9 @@ export function TicketDetail() {
   const updateTicket = useBoardStore((s) => s.updateTicket);
   const deleteTicket = useBoardStore((s) => s.deleteTicket);
   const moveTicket = useBoardStore((s) => s.moveTicket);
-
+  const addComment = useBoardStore((s) => s.addComment);
+  const updateComment = useBoardStore((s) => s.updateComment);
+  const deleteComment = useBoardStore((s) => s.deleteComment);
 
   const ticket = useMemo(
     () => tickets.find((t) => t.id === selectedTicketId),
@@ -99,7 +101,9 @@ export function TicketDetail() {
   const [localDescription, setLocalDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
-
+  const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState('');
 
   const [hasDeadline, setHasDeadline] = useState(!!ticket?.deadline);
   const [deadlineDay, setDeadlineDay] = useState('');
@@ -224,6 +228,35 @@ export function TicketDetail() {
       const href = url.startsWith('http') ? url : `https://${url}`;
       return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
     });
+  };
+
+  const handleAddComment = () => {
+    const text = newComment.trim();
+    if (!text || text === '<br>') return;
+    addComment(ticket.id, linkify(text));
+    setNewComment('');
+  };
+
+  const startEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentText(ensureHtml(comment.text));
+  };
+
+  const saveEditComment = () => {
+    const text = editCommentText.trim();
+    if (!text || text === '<br>') return;
+    updateComment(ticket.id, editingCommentId, linkify(text));
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  const handleDeleteComment = (commentId) => {
+    deleteComment(ticket.id, commentId);
   };
 
   return (
@@ -413,7 +446,93 @@ export function TicketDetail() {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
 
+          {/* Comentarios */}
+          <div className="pt-4 border-t border-kb-border">
+            <label className="block text-xs text-kb-text-secondary mb-3 uppercase tracking-wide">Comentarios</label>
 
+            <div className="space-y-3 mb-4">
+              {(ticket.comments || []).map((comment) => (
+                <div key={comment.id} className="bg-kb-bg border border-kb-border rounded-lg p-4 group">
+                  {editingCommentId === comment.id ? (
+                    <div className="space-y-2">
+                      <RichTextEditor
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        placeholder={t('ticket.editCommentPlaceholder')}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={cancelEditComment}
+                          className="px-3 py-1.5 text-xs text-kb-text-secondary hover:text-kb-text rounded hover:bg-kb-hover transition-colors"
+                        >
+                          {t('ticket.cancel')}
+                        </button>
+                        <button
+                          onClick={saveEditComment}
+                          className="px-3 py-1.5 text-xs font-medium text-black bg-white rounded hover:bg-gray-200 transition-colors"
+                        >
+                          <Check size={12} className="inline mr-1" />
+                          {t('ticket.save')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="rich-text text-sm text-kb-text leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: ensureHtml(comment.text) }}
+                          />
+                          <p className="text-xs text-kb-text-secondary mt-2">
+                            {formatDateTime(comment.updatedAt || comment.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button
+                            onClick={() => startEditComment(comment)}
+                            className="p-1.5 text-kb-text-secondary hover:text-kb-text rounded hover:bg-kb-hover transition-colors"
+                            title={t('ticket.editTooltip')}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="p-1.5 text-kb-text-secondary hover:text-red-400 rounded hover:bg-kb-hover transition-colors"
+                            title={t('ticket.deleteCommentTooltip')}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {(!ticket.comments || ticket.comments.length === 0) && (
+                <p className="text-sm text-kb-text-secondary italic">{t('ticket.noComments')}</p>
+              )}
+            </div>
+
+            {/* Nuevo comentario */}
+            <div className="space-y-2">
+              <RichTextEditor
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={t('ticket.newCommentPlaceholder')}
+              />
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || newComment.trim() === '<br>'}
+                  className="px-4 py-2 text-sm font-medium bg-kb-text text-black rounded-lg hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {t('ticket.addComment')}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export function TicketCard({ ticket }) {
       {...attributes}
       {...listeners}
       onClick={() => selectTicket(ticket.id)}
-      className="bg-kb-card border border-kb-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-kb-text-secondary transition-all duration-200 group touch-none relative"
+      className="bg-kb-card border border-kb-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-kb-text-secondary transition-all duration-200 group touch-none relative select-none"
     >
       {/* Acciones rápidas (aparecen on hover) */}
       <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">

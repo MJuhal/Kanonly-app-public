@@ -15,23 +15,24 @@ function getInitialData() {
   const col2 = generateId();
   const col3 = generateId();
 
-  const t1 = { id: generateId(), displayId: padTicketId(1), title: 'Diseñar mockups en Figma', description: '', links: [], images: [], columnId: col1, priority: 'high', createdAt: Date.now() };
-  const t2 = { id: generateId(), displayId: padTicketId(2), title: 'Configurar proyecto Vite + React', description: '', links: [], images: [], columnId: col1, priority: 'medium', createdAt: Date.now() };
-  const t3 = { id: generateId(), displayId: padTicketId(3), title: 'Implementar drag and drop', description: '', links: [], images: [], columnId: col2, priority: 'high', createdAt: Date.now() };
-  const t4 = { id: generateId(), displayId: padTicketId(4), title: 'Persistencia con Tauri', description: '', links: [], images: [], columnId: col3, priority: 'low', createdAt: Date.now() };
+  const t1 = { id: generateId(), displayId: padTicketId(1), title: 'TICKET TEMPLATE', icon: '🎫', description: '', links: [], images: [], columnId: col1, priority: 'medium', createdAt: Date.now(), deadline: null, comments: [] };
+
+  const note1 = { id: generateId(), title: 'Nota Template', icon: '📝', description: '', links: [], images: [], priority: 'medium', comments: [], createdAt: Date.now(), sortOrder: 0 };
 
   return {
     boards: [
-      { id: boardId, name: 'Nombre Tablero 1', createdAt: Date.now(), ticketCounter: 4 },
+      { id: boardId, name: 'Tablero Template', icon: '📋', createdAt: Date.now(), ticketCounter: 1 },
     ],
     columns: [
-      { id: col1, title: 'TO DO', boardId, order: 0, ticketIds: [t1.id, t2.id] },
-      { id: col2, title: 'IN PROGRESS', boardId, order: 1, ticketIds: [t3.id] },
-      { id: col3, title: 'COMPLETE', boardId, order: 2, ticketIds: [t4.id] },
+      { id: col1, title: 'TO DO', boardId, order: 0, ticketIds: [t1.id] },
+      { id: col2, title: 'IN PROGRESS', boardId, order: 1, ticketIds: [] },
+      { id: col3, title: 'COMPLETE', boardId, order: 2, ticketIds: [] },
     ],
-    tickets: [t1, t2, t3, t4],
+    tickets: [t1],
+    notes: [note1],
     selectedBoardId: boardId,
     selectedTicketId: null,
+    selectedNoteId: null,
     view: 'home',
     history: [],
     initialized: false,
@@ -44,6 +45,7 @@ function buildSnapshot(state) {
     boards: JSON.parse(JSON.stringify(state.boards)),
     columns: JSON.parse(JSON.stringify(state.columns)),
     tickets: JSON.parse(JSON.stringify(state.tickets)),
+    notes: JSON.parse(JSON.stringify(state.notes)),
   };
 }
 
@@ -61,7 +63,7 @@ export const useBoardStore = create((set, get) => {
         nextState = { ...nextState, history: newHistory };
       }
 
-      const { selectedTicketId, initialized, history, ...toSave } = nextState;
+      const { selectedTicketId, selectedNoteId, initialized, history, ...toSave } = nextState;
       saveData(toSave);
       return nextState;
     });
@@ -88,7 +90,9 @@ export const useBoardStore = create((set, get) => {
         boards: boardsWithCounter,
         columns: data.columns || state.columns,
         tickets: data.tickets || state.tickets,
+        notes: data.notes || [],
         selectedTicketId: null,
+        selectedNoteId: null,
         initialized: true,
         loadError: null,
       }));
@@ -114,17 +118,19 @@ export const useBoardStore = create((set, get) => {
           boards: lastSnapshot.boards,
           columns: lastSnapshot.columns,
           tickets: lastSnapshot.tickets,
+          notes: lastSnapshot.notes,
           history: newHistory,
           selectedTicketId: null,
+          selectedNoteId: null,
         };
 
-        const { selectedTicketId, initialized, history, ...toSave } = newState;
+        const { selectedTicketId, selectedNoteId, initialized, history, ...toSave } = newState;
         saveData(toSave);
         return newState;
       });
     },
 
-    setView: (view) => set({ view, selectedTicketId: null }),
+    setView: (view) => set({ view, selectedTicketId: null, selectedNoteId: null }),
 
     selectBoard: (boardId) => set({ selectedBoardId: boardId, view: 'boards' }),
 
@@ -137,8 +143,8 @@ export const useBoardStore = create((set, get) => {
       }));
     },
 
-    createBoard: (name) => {
-      const newBoard = { id: generateId(), name, createdAt: Date.now(), ticketCounter: 0 };
+    createBoard: (name, icon = null) => {
+      const newBoard = { id: generateId(), name, icon, createdAt: Date.now(), ticketCounter: 0 };
       persist((state) => ({
         ...state,
         boards: [...state.boards, newBoard],
@@ -165,7 +171,7 @@ export const useBoardStore = create((set, get) => {
       });
     },
 
-    createColumn: (boardId, title) => {
+    createColumn: (boardId, title, color) => {
       const boardCols = get().columns.filter((c) => c.boardId === boardId);
       const newCol = {
         id: generateId(),
@@ -173,6 +179,7 @@ export const useBoardStore = create((set, get) => {
         boardId,
         order: boardCols.length,
         ticketIds: [],
+        color: color || null,
       };
       persist((state) => ({
         ...state,
@@ -198,7 +205,7 @@ export const useBoardStore = create((set, get) => {
       }));
     },
 
-    createTicket: (columnId, title) => {
+    createTicket: (columnId, title, icon = null) => {
       const state = get();
       const column = state.columns.find((c) => c.id === columnId);
       if (!column) return null;
@@ -212,6 +219,7 @@ export const useBoardStore = create((set, get) => {
         id: generateId(),
         displayId: padTicketId(nextNum),
         title,
+        icon,
         description: '',
         links: [],
         images: [],
@@ -219,6 +227,7 @@ export const useBoardStore = create((set, get) => {
         priority: 'medium',
         createdAt: Date.now(),
         deadline: null,
+        comments: [],
       };
 
       persist((s) => {
@@ -280,6 +289,7 @@ export const useBoardStore = create((set, get) => {
         displayId: padTicketId(nextNum),
         title: `${original.title} (copia)`,
         createdAt: Date.now(),
+        comments: (original.comments || []).map((c) => ({ ...c, id: generateId() })),
       };
 
       persist((s) => {
@@ -360,7 +370,148 @@ export const useBoardStore = create((set, get) => {
       });
     },
 
-    selectTicket: (ticketId) => set({ selectedTicketId: ticketId }),
+    selectTicket: (ticketId) => set({ selectedTicketId: ticketId, selectedNoteId: null }),
     closeTicketDetail: () => set({ selectedTicketId: null }),
+
+    addComment: (ticketId, text) => {
+      persist((state) => ({
+        ...state,
+        tickets: state.tickets.map((t) =>
+          t.id === ticketId
+            ? {
+                ...t,
+                comments: [
+                  ...(t.comments || []),
+                  { id: generateId(), text, createdAt: Date.now(), updatedAt: Date.now() },
+                ],
+              }
+            : t
+        ),
+      }));
+    },
+
+    updateComment: (ticketId, commentId, text) => {
+      persist((state) => ({
+        ...state,
+        tickets: state.tickets.map((t) =>
+          t.id === ticketId
+            ? {
+                ...t,
+                comments: (t.comments || []).map((c) =>
+                  c.id === commentId ? { ...c, text, updatedAt: Date.now() } : c
+                ),
+              }
+            : t
+        ),
+      }));
+    },
+
+    deleteComment: (ticketId, commentId) => {
+      persist((state) => ({
+        ...state,
+        tickets: state.tickets.map((t) =>
+          t.id === ticketId
+            ? { ...t, comments: (t.comments || []).filter((c) => c.id !== commentId) }
+            : t
+        ),
+      }));
+    },
+
+    // Notas
+    createNote: (title, icon = null) => {
+      const state = get();
+      const maxSort = state.notes.reduce((max, n) => Math.max(max, n.sortOrder || 0), -1);
+      const newNote = {
+        id: generateId(),
+        title,
+        icon,
+        description: '',
+        links: [],
+        images: [],
+        priority: 'medium',
+        comments: [],
+        createdAt: Date.now(),
+        sortOrder: maxSort + 1,
+      };
+      persist((s) => ({
+        ...s,
+        notes: [...s.notes, newNote],
+      }));
+      return newNote.id;
+    },
+
+    reorderNotes: (orderedIds) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) => {
+          const idx = orderedIds.indexOf(n.id);
+          return idx >= 0 ? { ...n, sortOrder: idx } : n;
+        }),
+      }));
+    },
+
+    updateNote: (noteId, updates) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId ? { ...n, ...updates } : n
+        ),
+      }));
+    },
+
+    deleteNote: (noteId) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.filter((n) => n.id !== noteId),
+        selectedNoteId: state.selectedNoteId === noteId ? null : state.selectedNoteId,
+      }));
+    },
+
+    addNoteComment: (noteId, text) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? {
+                ...n,
+                comments: [
+                  ...(n.comments || []),
+                  { id: generateId(), text, createdAt: Date.now(), updatedAt: Date.now() },
+                ],
+              }
+            : n
+        ),
+      }));
+    },
+
+    updateNoteComment: (noteId, commentId, text) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? {
+                ...n,
+                comments: (n.comments || []).map((c) =>
+                  c.id === commentId ? { ...c, text, updatedAt: Date.now() } : c
+                ),
+              }
+            : n
+        ),
+      }));
+    },
+
+    deleteNoteComment: (noteId, commentId) => {
+      persist((state) => ({
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === noteId
+            ? { ...n, comments: (n.comments || []).filter((c) => c.id !== commentId) }
+            : n
+        ),
+      }));
+    },
+
+    selectNote: (noteId) => set({ selectedNoteId: noteId, selectedTicketId: null }),
+    closeNoteDetail: () => set({ selectedNoteId: null }),
   };
 });

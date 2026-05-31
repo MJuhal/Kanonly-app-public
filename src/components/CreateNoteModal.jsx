@@ -5,27 +5,27 @@ import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { EmojiPicker } from './EmojiPicker';
 
-export function CreateBoardModal({ isOpen, onClose, onCreate }) {
-  const [name, setName] = useState('');
+export function CreateNoteModal({ isOpen, onClose, onCreate }) {
+  const [title, setTitle] = useState('');
   const [icon, setIcon] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    onCreate(name.trim(), icon);
-    setName('');
+    if (!title.trim()) return;
+    onCreate(title.trim(), icon);
+    setTitle('');
     setIcon(null);
     onClose();
   };
 
   const handleClose = () => {
-    setName('');
+    setTitle('');
     setIcon(null);
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={t('modal.createBoard')}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={t('modal.createNote')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex items-center gap-2">
           <EmojiPicker
@@ -34,9 +34,9 @@ export function CreateBoardModal({ isOpen, onClose, onCreate }) {
             onClear={() => setIcon(null)}
           />
           <Input
-            placeholder={t('modal.boardNamePlaceholder')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder={t('modal.noteTitlePlaceholder')}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             autoFocus
             className="flex-1"
           />

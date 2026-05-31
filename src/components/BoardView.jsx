@@ -157,7 +157,7 @@ export function BoardView() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 flex flex-col min-w-0 select-none">
       {/* Header sticky */}
       <div className="sticky top-0 z-20 bg-[#0F0F0F] px-8 py-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-kb-border min-w-0">
         <div className="flex-1 min-w-0 mr-4">
@@ -176,9 +176,10 @@ export function BoardView() {
           ) : (
             <h2
               onClick={startEditingTitle}
-              className="text-xl font-bold cursor-pointer hover:text-kb-text-secondary transition-colors truncate"
+              className="text-xl font-bold cursor-pointer hover:text-kb-text-secondary transition-colors truncate flex items-center gap-2"
               title={t('board.editTitleTooltip')}
             >
+              {currentBoard.icon && <span>{currentBoard.icon}</span>}
               {currentBoard.name}
             </h2>
           )}
@@ -283,7 +284,7 @@ export function BoardView() {
       <CreateColumnModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={(title) => createColumn(currentBoard.id, title, null)}
+        onCreate={(title, color) => createColumn(currentBoard.id, title, color)}
       />
     </div>
   );
