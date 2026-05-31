@@ -1,21 +1,18 @@
 import { useBoardStore } from '../store/boardStore';
 import { t } from '../i18n';
-import { Layout, StickyNote, ArrowRight } from 'lucide-react';
+import { Layout, ArrowRight } from 'lucide-react';
 
 export function HomeView() {
   const boards = useBoardStore((s) => s.boards);
   const tickets = useBoardStore((s) => s.tickets);
-  const notes = useBoardStore((s) => s.notes);
   const columns = useBoardStore((s) => s.columns);
   const selectBoard = useBoardStore((s) => s.selectBoard);
-  const selectNote = useBoardStore((s) => s.selectNote);
-  const setView = useBoardStore((s) => s.setView);
 
   const recentBoards = [...boards]
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
     .slice(0, 5);
 
-  const recentNotes = notes.slice(0, 5);
+
 
   const getTicketCount = (boardId) => {
     return tickets.filter((t) => {
@@ -28,10 +25,7 @@ export function HomeView() {
     selectBoard(boardId);
   };
 
-  const handleNoteClick = (noteId) => {
-    setView('notes');
-    selectNote(noteId);
-  };
+
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F] select-none">
@@ -77,11 +71,7 @@ export function HomeView() {
                 className="w-full flex items-center justify-between bg-[#1A1A1A] hover:bg-[#252525] border border-[#222222] rounded-lg px-5 py-4 transition-all duration-200 group"
               >
                 <div className="flex items-center gap-3">
-                  {board.icon ? (
-                    <span className="text-lg">{board.icon}</span>
-                  ) : (
-                    <Layout size={18} className="text-kb-text-secondary" />
-                  )}
+                  {board.icon ? <span className="text-lg">{board.icon}</span> : <Layout size={18} className="text-kb-text-secondary" />}
                   <span className="text-sm font-semibold text-kb-text group-hover:text-white transition-colors">
                     {board.name}
                   </span>
@@ -105,42 +95,7 @@ export function HomeView() {
           </div>
         </div>
 
-        {/* Notas Recientes */}
-        <div>
-          <h2 className="text-sm font-bold tracking-wider mb-4">
-            <span className="text-white">{t('home.recentNotes')}</span>{' '}
-            <span className="text-kb-text-secondary">{t('home.recentNotesSuffix')}</span>
-          </h2>
-          <div className="space-y-2">
-            {recentNotes.map((note) => (
-              <button
-                key={note.id}
-                onClick={() => handleNoteClick(note.id)}
-                className="w-full flex items-center justify-between bg-[#1A1A1A] hover:bg-[#252525] border border-[#222222] rounded-lg px-5 py-4 transition-all duration-200 group"
-              >
-                <div className="flex items-center gap-3">
-                  {note.icon ? (
-                    <span className="text-lg">{note.icon}</span>
-                  ) : (
-                    <StickyNote size={18} className="text-kb-text-secondary" />
-                  )}
-                  <span className="text-sm font-semibold text-kb-text group-hover:text-white transition-colors">
-                    {note.title || t('sidebar.untitledNote')}
-                  </span>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-kb-text-secondary group-hover:text-white group-hover:translate-x-1 transition-all"
-                />
-              </button>
-            ))}
-            {recentNotes.length === 0 && (
-              <p className="text-sm text-kb-text-secondary py-4">
-                {t('home.noNotes')}
-              </p>
-            )}
-          </div>
-        </div>
+
       </div>
     </div>
   );

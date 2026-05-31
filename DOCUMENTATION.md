@@ -24,9 +24,7 @@
 
 ## 1. Resumen Ejecutivo
 
-Esta es la **versión free y open-source** de KANONLY. Contiene todas las features no-PRO del proyecto: tableros Kanban ilimitados, notas independientes, comentarios, colores de columna, emoji picker, editor WYSIWYG, drag & drop, y persistencia SQLite local.
-
-La única diferencia con la versión de Microsoft Store es la ausencia del **sistema de licencias PRO** (Microsoft Store IAP), que vive en el repositorio privado.
+Esta es la **versión demo y open-source** de KANONLY. Es una versión limitada con los siguientes restricciones intencionales: máximo 1 tablero, 10 tickets por tablero, sin notas, sin comentarios y sin colores de columna. La única diferencia con la versión de Microsoft Store es la ausencia del **sistema de licencias PRO** (Microsoft Store IAP), que vive en el repositorio privado.
 
 ---
 
@@ -73,19 +71,16 @@ Kanonly-app-public/
 │   │   ├── App.jsx               # Layout + routing + Ctrl+Z
 │   │   ├── BoardView.jsx         # Vista Kanban
 │   │   ├── BoardsView.jsx        # Grid de tableros
-│   │   ├── Column.jsx            # Columna sortable/droppable + color picker
+│   │   ├── Column.jsx            # Columna sortable/droppable
 │   │   ├── CreateBoardModal.jsx
-│   │   ├── CreateColumnModal.jsx # Con selector de color
-│   │   ├── CreateNoteModal.jsx   # Modal de creación de nota
+│   │   ├── CreateColumnModal.jsx # Solo input de título
 │   │   ├── CreateTicketModal.jsx
 │   │   ├── EmojiPicker.jsx       # Selector de emojis
-│   │   ├── HomeView.jsx          # Con sección de notas recientes
-│   │   ├── NoteDetail.jsx        # Panel lateral de notas
-│   │   ├── NotesView.jsx         # Lista de notas con DnD
+│   │   ├── HomeView.jsx          # Home con tableros recientes
 │   │   ├── RichTextEditor.jsx
-│   │   ├── Sidebar.jsx           # Tableros + notas
+│   │   ├── Sidebar.jsx           # Navegación lateral
 │   │   ├── TicketCard.jsx
-│   │   └── TicketDetail.jsx      # Con comentarios
+│   │   └── TicketDetail.jsx      # Panel lateral de ticket
 │   ├── store/
 │   │   ├── boardStore.js         # Estado global + undo
 │   │   ├── licenseStore.js       # Stub (siempre FREE)
@@ -99,6 +94,9 @@ Kanonly-app-public/
 ```
 
 **Nota:** No existen en este repo (viven en el repositorio privado):
+- `src/components/NotesView.jsx`
+- `src/components/NoteDetail.jsx`
+- `src/components/CreateNoteModal.jsx`
 - `src/components/UpgradeModal.jsx`
 - `src-tauri/src/license.rs`
 - `src-tauri/src/store_purchase.rs`
@@ -129,7 +127,7 @@ El schema SQLite es idéntico al de la versión completa, pero la UI no expone t
 | `boardId` | string |
 | `order` | number |
 | `ticketIds` | string[] |
-| `color` | string \| null |
+| `color` | string \| null | No expuesto en UI demo |
 
 **Ticket**
 | Campo | Tipo |
@@ -143,22 +141,8 @@ El schema SQLite es idéntico al de la versión completa, pero la UI no expone t
 | `priority` | string |
 | `createdAt` | number |
 | `deadline` | number \| null |
-| `comments` | Comment[] |
-
-### Entidades adicionales
-
-**Note**
-| Campo | Tipo |
-|-------|------|
-| `id` | string |
-| `title` | string |
 | `icon` | string \| null | Emoji opcional |
-| `description` | string (HTML) |
-| `images` | string[] (base64) |
-| `priority` | string |
-| `createdAt` | number |
-| `sortOrder` | number |
-| `comments` | Comment[] |
+| `comments` | Comment[] | No expuesto en UI demo |
 
 ---
 
@@ -175,12 +159,12 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 | Componente | Responsabilidad |
 |-----------|-----------------|
 | **App.jsx** | Layout global, switch de vistas, Ctrl+Z. |
-| **Sidebar.jsx** | Navegación lateral con tableros y notas. |
-| **BoardsView.jsx** | Grid de tableros con métricas. |
+| **Sidebar.jsx** | Navegación lateral con tableros. Límite: 1 tablero. |
+| **BoardsView.jsx** | Grid de tableros con métricas. Límite: 1 tablero. |
 | **BoardView.jsx** | Vista Kanban. Header + columnas + búsqueda. |
-| **Column.jsx** | Columna sortable/droppable con color picker (10 colores). |
-| **TicketDetail.jsx** | Panel lateral. Título, WYSIWYG, prioridad, deadline, imágenes, comentarios. |
-| **CreateColumnModal.jsx** | Input de título + selector de color. |
+| **Column.jsx** | Columna sortable/droppable. Límite: 10 tickets. Sin color picker. |
+| **TicketDetail.jsx** | Panel lateral. Título, WYSIWYG, prioridad, deadline, imágenes. Sin comentarios. |
+| **CreateColumnModal.jsx** | Input de título únicamente. Sin selector de color. |
 | **RichTextEditor.jsx** | Editor WYSIWYG completo (igual que en PRO). |
 
 ---
@@ -188,7 +172,7 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 ## 8. Flujos de Usuario
 
 ### 8.1 Tableros
-- Crear: Click en "+" en sidebar o en BoardsView.
+- Crear: Click en "+" en sidebar o en BoardsView (máximo 1).
 - Abrir: Click en tablero.
 - Eliminar: 🗑️ en sidebar (con confirmación).
 
@@ -198,15 +182,10 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 - Eliminar: 🗑️ en header.
 
 ### 8.3 Tickets
-- Crear: Click en "+" dentro de columna.
+- Crear: Click en "+" dentro de columna (máximo 10 por tablero).
 - Mover: Drag entre columnas o reordenar dentro de una.
 - Editar: Click en tarjeta → TicketDetail.
 - Eliminar: 🗑️ en TicketDetail.
-
-### 8.4 Notas
-- Sección independiente en sidebar.
-- Reordenamiento DnD en `NotesView`.
-- Comentarios en notas (igual que tickets).
 
 ### 8.4 Editor WYSIWYG
 - Negrita, cursiva, subrayado, código inline, bloques de código, imágenes base64.
@@ -216,13 +195,13 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 
 ## 9. Diferencias con la Versión Completa
 
-| Aspecto | Versión Pública | Versión Completa (Privada) |
-|---------|-----------------|---------------------------|
-| **Tableros** | ✅ Ilimitados | ✅ Ilimitados |
-| **Tickets** | ✅ Ilimitados | ✅ Ilimitados |
-| **Notas** | ✅ Completas | ✅ Completas |
-| **Comentarios** | ✅ CRUD completo | ✅ CRUD completo |
-| **Colores de columna** | ✅ 10 colores | ✅ 10 colores |
+| Aspecto | Versión Pública (Demo) | Versión Completa (Privada) |
+|---------|------------------------|---------------------------|
+| **Tableros** | ✅ 1 máximo | ✅ Ilimitados |
+| **Tickets** | ✅ 10 máximo por tablero | ✅ Ilimitados |
+| **Notas** | ❌ No incluido | ✅ Completas |
+| **Comentarios** | ❌ No incluido | ✅ CRUD completo |
+| **Colores de columna** | ❌ No incluido | ✅ 10 colores |
 | **Emoji icons** | ✅ Incluido | ✅ Incluido |
 | **Licencias / Store IAP** | ❌ No incluido | ✅ Microsoft Store IAP nativo |
 | **UpgradeModal** | ❌ No incluido | ✅ Modal de upgrade |
@@ -233,7 +212,7 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 ## 10. Build y Distribución
 
 > **Nota:** La versión completa con sistema de licencias PRO está disponible en [Microsoft Store](https://apps.microsoft.com).
-> Este repo contiene el código free y open-source sin el sistema de licencias.
+> Este repo contiene el código demo y open-source sin el sistema de licencias.
 
 ```bash
 npm install

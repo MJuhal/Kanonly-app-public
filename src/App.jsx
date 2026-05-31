@@ -3,14 +3,11 @@ import { Sidebar } from './components/Sidebar';
 import { BoardView } from './components/BoardView';
 import { BoardsView } from './components/BoardsView';
 import { HomeView } from './components/HomeView';
-import { NotesView } from './components/NotesView';
 import { TicketDetail } from './components/TicketDetail';
-import { NoteDetail } from './components/NoteDetail';
 import { useBoardStore } from './store/boardStore';
 
 function App() {
   const selectedTicketId = useBoardStore((s) => s.selectedTicketId);
-  const selectedNoteId = useBoardStore((s) => s.selectedNoteId);
   const selectedBoardId = useBoardStore((s) => s.selectedBoardId);
   const initialized = useBoardStore((s) => s.initialized);
   const view = useBoardStore((s) => s.view);
@@ -53,8 +50,6 @@ function App() {
       <main className="flex-1 flex flex-col min-h-screen min-w-0">
         {view === 'home' ? (
           <HomeView />
-        ) : view === 'notes' ? (
-          <NotesView />
         ) : view === 'boards' && !selectedBoardId ? (
           <BoardsView />
         ) : (
@@ -62,7 +57,6 @@ function App() {
         )}
       </main>
       {selectedTicketId && <TicketDetail />}
-      {selectedNoteId && <NoteDetail />}
     </div>
   );
 }

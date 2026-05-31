@@ -13,7 +13,7 @@
   </a>
 </p>
 
-This is the **free, open-source version** of KANONLY — a privacy-first, offline Kanban desktop app for Windows. This repository exists for **transparency and trust**: anyone can inspect the code, compile it, and use the full free version of the app.
+This is the **free, open-source demo version** of KANONLY — a privacy-first, offline Kanban desktop app for Windows. This repository exists for **transparency and trust**: anyone can inspect the code, compile it, and try the app.
 
 > 🇦🇷 Made in Buenos Aires by [Martin Juhal](https://www.martinjuhal.com).
 
@@ -21,15 +21,15 @@ This is the **free, open-source version** of KANONLY — a privacy-first, offlin
 
 ## ⚠️ About This Repository
 
-This public repo contains the **free, open-source core** of KANONLY. It includes all non-PRO features: boards, notes, comments, column colors, drag & drop, and full persistence. The only difference with the Microsoft Store version is the **PRO license system** (managed via Microsoft Store IAP), which lives in the private repository.
+This public repo contains a **limited demo** of KANONLY. It is NOT a free unlimited version — it has intentional limits to encourage supporting the project via the Microsoft Store version.
 
-| Feature | This Repo (Free) | Full App (Microsoft Store) |
+| Feature | This Repo (Demo) | Full App (Microsoft Store) |
 |---------|------------------|---------------------|
-| Boards | ✅ Unlimited | ✅ Unlimited |
-| Tickets | ✅ Unlimited | ✅ Unlimited |
-| Notes | ✅ Unlimited | ✅ Unlimited |
-| Comments | ✅ Included | ✅ Included |
-| Column colors | ✅ Included | ✅ Included |
+| Boards | ✅ **1 max** | ✅ Unlimited |
+| Tickets | ✅ **10 max per board** | ✅ Unlimited |
+| Notes | ❌ Not included | ✅ Unlimited |
+| Comments | ❌ Not included | ✅ Included |
+| Column colors | ❌ Not included | ✅ Included |
 | Emoji icons | ✅ Included | ✅ Included |
 | Drag & drop | ✅ Included | ✅ Included |
 | Rich-text editor | ✅ Included | ✅ Included |
@@ -128,7 +128,7 @@ Please open an issue before submitting major changes.
 
 ## 💬 Why a Public Repo?
 
-As a solo indie developer, I believe in **transparency**: you should be able to see exactly what the app does before installing it. At the same time, I need a sustainable way to keep improving KANONLY. By open-sourcing the free core of the app, I can offer both trust and a reason to support the project.
+As a solo indie developer, I believe in **transparency**: you should be able to see exactly what the app does before installing it. At the same time, I need a sustainable way to keep improving KANONLY. By open-sourcing a demo version of the app, I can offer both trust and a reason to support the project.
 
 **Get the full app:** 👉 [kanonly.me](https://www.kanonly.me/)
 

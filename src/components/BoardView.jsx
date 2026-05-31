@@ -284,7 +284,7 @@ export function BoardView() {
       <CreateColumnModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={(title, color) => createColumn(currentBoard.id, title, color)}
+        onCreate={(title) => createColumn(currentBoard.id, title, null)}
       />
     </div>
   );
