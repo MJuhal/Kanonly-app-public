@@ -1,7 +1,7 @@
-# KANONLY Free Demo — Documentación Técnica
+# KANONLY Free Open Source — Documentación Técnica
 
 **Autor:** Martin Juhal  
-**Versión:** 1.6.1 (Demo Pública)  
+**Versión:** 1.6.3  
 **Fecha:** Mayo 2026  
 **Licencia:** PolyForm Noncommercial 1.0.0
 
@@ -24,17 +24,9 @@
 
 ## 1. Resumen Ejecutivo
 
-Esta es la **versión demo pública** de KANONLY. Contiene el núcleo funcional de la app (tableros Kanban, tickets, editor WYSIWYG, drag & drop) pero con **límites intencionales** para incentivar el soporte al desarrollador.
+Esta es la **versión free y open-source** de KANONLY. Contiene todas las features no-PRO del proyecto: tableros Kanban ilimitados, notas independientes, comentarios, colores de columna, emoji picker, editor WYSIWYG, drag & drop, y persistencia SQLite local.
 
-### Límites de la versión demo
-
-- **1 tablero** (máximo)
-- **10 tickets** por tablero (máximo)
-- **Sin sistema de notas**
-- **Sin comentarios** en tickets
-- **Sin colores de columna**
-
-Todo lo demás funciona igual que en la versión completa: drag & drop, rich text, búsqueda, undo, persistencia SQLite, internacionalización.
+La única diferencia con la versión de Microsoft Store es la ausencia del **sistema de licencias PRO** (Microsoft Store IAP), que vive en el repositorio privado.
 
 ---
 
@@ -80,16 +72,20 @@ Kanonly-app-public/
 │   │   ├── ui/                   # Button, Input, Modal
 │   │   ├── App.jsx               # Layout + routing + Ctrl+Z
 │   │   ├── BoardView.jsx         # Vista Kanban
-│   │   ├── BoardsView.jsx        # Grid de tableros (1 max)
-│   │   ├── Column.jsx            # Columna sortable/droppable
+│   │   ├── BoardsView.jsx        # Grid de tableros
+│   │   ├── Column.jsx            # Columna sortable/droppable + color picker
 │   │   ├── CreateBoardModal.jsx
-│   │   ├── CreateColumnModal.jsx # Sin selector de color
+│   │   ├── CreateColumnModal.jsx # Con selector de color
+│   │   ├── CreateNoteModal.jsx   # Modal de creación de nota
 │   │   ├── CreateTicketModal.jsx
-│   │   ├── HomeView.jsx          # Sin sección de notas
+│   │   ├── EmojiPicker.jsx       # Selector de emojis
+│   │   ├── HomeView.jsx          # Con sección de notas recientes
+│   │   ├── NoteDetail.jsx        # Panel lateral de notas
+│   │   ├── NotesView.jsx         # Lista de notas con DnD
 │   │   ├── RichTextEditor.jsx
-│   │   ├── Sidebar.jsx           # Solo tableros, sin notas
+│   │   ├── Sidebar.jsx           # Tableros + notas
 │   │   ├── TicketCard.jsx
-│   │   └── TicketDetail.jsx      # Sin comentarios
+│   │   └── TicketDetail.jsx      # Con comentarios
 │   ├── store/
 │   │   ├── boardStore.js         # Estado global + undo
 │   │   ├── licenseStore.js       # Stub (siempre FREE)
@@ -102,12 +98,10 @@ Kanonly-app-public/
 └── public/
 ```
 
-**Nota:** No existen en este repo:
-- `src/components/NotesView.jsx`
-- `src/components/NoteDetail.jsx`
-- `src/components/CreateNoteModal.jsx`
+**Nota:** No existen en este repo (viven en el repositorio privado):
 - `src/components/UpgradeModal.jsx`
 - `src-tauri/src/license.rs`
+- `src-tauri/src/store_purchase.rs`
 - Fuentes comerciales (Neutra Text OTF)
 
 ---
@@ -124,6 +118,7 @@ El schema SQLite es idéntico al de la versión completa, pero la UI no expone t
 | `id` | string |
 | `name` | string |
 | `createdAt` | number |
+| `icon` | string \| null | Emoji opcional |
 | `ticketCounter` | number |
 
 **Column**
@@ -134,7 +129,7 @@ El schema SQLite es idéntico al de la versión completa, pero la UI no expone t
 | `boardId` | string |
 | `order` | number |
 | `ticketIds` | string[] |
-| `color` | string \| null *(no editable en demo)* |
+| `color` | string \| null |
 
 **Ticket**
 | Campo | Tipo |
@@ -148,11 +143,22 @@ El schema SQLite es idéntico al de la versión completa, pero la UI no expone t
 | `priority` | string |
 | `createdAt` | number |
 | `deadline` | number \| null |
-| `comments` | Comment[] *(no editable en demo)* |
+| `comments` | Comment[] |
 
-### Entidades ocultas en UI
+### Entidades adicionales
 
-**Note** — existe en schema SQLite pero no hay componentes para ver/crear/editar notas.
+**Note**
+| Campo | Tipo |
+|-------|------|
+| `id` | string |
+| `title` | string |
+| `icon` | string \| null | Emoji opcional |
+| `description` | string (HTML) |
+| `images` | string[] (base64) |
+| `priority` | string |
+| `createdAt` | number |
+| `sortOrder` | number |
+| `comments` | Comment[] |
 
 ---
 
@@ -169,12 +175,12 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 | Componente | Responsabilidad |
 |-----------|-----------------|
 | **App.jsx** | Layout global, switch de vistas, Ctrl+Z. |
-| **Sidebar.jsx** | Solo sección de Tableros. Sin notas, sin badge PRO. Botón "+" deshabilitado si hay 1 tablero. |
-| **BoardsView.jsx** | Grid de tableros. Contador "X / 1". Botón "Nuevo tablero" deshabilitado al límite. |
+| **Sidebar.jsx** | Navegación lateral con tableros y notas. |
+| **BoardsView.jsx** | Grid de tableros con métricas. |
 | **BoardView.jsx** | Vista Kanban. Header + columnas + búsqueda. |
-| **Column.jsx** | Columna sortable/droppable. Sin color picker. Botón "+" deshabilitado si el tablero tiene 10 tickets. |
-| **TicketDetail.jsx** | Panel lateral. Título, WYSIWYG, prioridad, deadline, imágenes. **Sin sección de comentarios.** |
-| **CreateColumnModal.jsx** | Solo input de título. Sin selector de color. |
+| **Column.jsx** | Columna sortable/droppable con color picker (10 colores). |
+| **TicketDetail.jsx** | Panel lateral. Título, WYSIWYG, prioridad, deadline, imágenes, comentarios. |
+| **CreateColumnModal.jsx** | Input de título + selector de color. |
 | **RichTextEditor.jsx** | Editor WYSIWYG completo (igual que en PRO). |
 
 ---
@@ -182,9 +188,9 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 ## 8. Flujos de Usuario
 
 ### 8.1 Tableros
-- Crear: Click en "+" en sidebar o en BoardsView. **Máximo 1.**
+- Crear: Click en "+" en sidebar o en BoardsView.
 - Abrir: Click en tablero.
-- Eliminar: 🗑️ en sidebar (solo si hay >1, imposible en demo).
+- Eliminar: 🗑️ en sidebar (con confirmación).
 
 ### 8.2 Columnas
 - Crear: Click en "+ Nueva Columna".
@@ -192,10 +198,15 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 - Eliminar: 🗑️ en header.
 
 ### 8.3 Tickets
-- Crear: Click en "+" dentro de columna. **Máximo 10 por tablero.**
-- Mover: Drag entre columnas.
+- Crear: Click en "+" dentro de columna.
+- Mover: Drag entre columnas o reordenar dentro de una.
 - Editar: Click en tarjeta → TicketDetail.
 - Eliminar: 🗑️ en TicketDetail.
+
+### 8.4 Notas
+- Sección independiente en sidebar.
+- Reordenamiento DnD en `NotesView`.
+- Comentarios en notas (igual que tickets).
 
 ### 8.4 Editor WYSIWYG
 - Negrita, cursiva, subrayado, código inline, bloques de código, imágenes base64.
@@ -205,23 +216,24 @@ Migraciones automáticas con `ALTER TABLE` al iniciar.
 
 ## 9. Diferencias con la Versión Completa
 
-| Aspecto | Demo Pública | Versión Completa (Privada) |
-|---------|-------------|---------------------------|
-| **Notas** | Sin UI | NotesView, NoteDetail, CreateNoteModal |
-| **Comentarios** | No renderizados en TicketDetail | CRUD completo en tickets y notas |
-| **Colores de columna** | No hay picker | 10 colores en CreateColumnModal y Column |
-| **Límite tableros** | 1 | Ilimitado |
-| **Límite tickets** | 10 por tablero | Ilimitado |
-| **Licencias** | Stub (`isPro: false`) | JWT validation con `jsonwebtoken` |
-| **UpgradeModal** | No existe | Modal de donación completo |
+| Aspecto | Versión Pública | Versión Completa (Privada) |
+|---------|-----------------|---------------------------|
+| **Tableros** | ✅ Ilimitados | ✅ Ilimitados |
+| **Tickets** | ✅ Ilimitados | ✅ Ilimitados |
+| **Notas** | ✅ Completas | ✅ Completas |
+| **Comentarios** | ✅ CRUD completo | ✅ CRUD completo |
+| **Colores de columna** | ✅ 10 colores | ✅ 10 colores |
+| **Emoji icons** | ✅ Incluido | ✅ Incluido |
+| **Licencias / Store IAP** | ❌ No incluido | ✅ Microsoft Store IAP nativo |
+| **UpgradeModal** | ❌ No incluido | ✅ Modal de upgrade |
 | **Fuentes** | Solo Roboto (Google Fonts) | Roboto + Neutra Text (local OTF) |
 
 ---
 
 ## 10. Build y Distribución
 
-> **Nota:** La versión completa PRO está disponible exclusivamente en [Microsoft Store](https://apps.microsoft.com).
-> Este repo es una demo funcional con límites intencionales.
+> **Nota:** La versión completa con sistema de licencias PRO está disponible en [Microsoft Store](https://apps.microsoft.com).
+> Este repo contiene el código free y open-source sin el sistema de licencias.
 
 ```bash
 npm install
@@ -243,4 +255,4 @@ src-tauri/target/release/bundle/
 
 ---
 
-*Documento actualizado para KANONLY v1.5.0 Demo Pública — Mayo 2026.*
+*Documento actualizado para KANONLY v1.6.3 — Mayo 2026.*
