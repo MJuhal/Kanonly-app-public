@@ -64,7 +64,6 @@ export function BoardView() {
     const q = query;
     return (
       ticket.title.toLowerCase().includes(q) ||
-      ticket.id.toLowerCase().includes(q) ||
       (ticket.displayId || '').toLowerCase().includes(q)
     );
   };
@@ -204,7 +203,10 @@ export function BoardView() {
               type="text"
               placeholder={t('board.searchPlaceholder')}
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearchQuery(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') executeSearch();
               }}
@@ -284,7 +286,7 @@ export function BoardView() {
       <CreateColumnModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={(title) => createColumn(currentBoard.id, title, null)}
+        onCreate={(title, color) => createColumn(currentBoard.id, title, color)}
       />
     </div>
   );
