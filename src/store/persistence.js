@@ -22,6 +22,7 @@ export async function loadData() {
         boards: data.boards,
         columns: data.columns,
         tickets: data.tickets,
+        notes: data.notes || [],
         ticketCounter: data.ticketCounter || data.tickets.length,
       };
     }
@@ -49,6 +50,7 @@ export async function saveData(state) {
     boards: state.boards,
     columns: state.columns,
     tickets: state.tickets,
+    notes: state.notes,
     ticketCounter: state.ticketCounter,
   };
 

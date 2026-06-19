@@ -138,6 +138,20 @@ pub fn migrate_from_json() -> Result<(), String> {
         .map_err(|e| format!("Failed to parse boards.json: {}", e))?;
     log::info!("Loaded {} boards", boards.len());
 
+    // Read notes
+    let notes_file = data_dir_path.join("notes.json");
+    let notes: Vec<models::Note> = if notes_file.exists() {
+        let content = fs::read_to_string(&notes_file)
+            .map_err(|e| format!("Failed to read notes.json: {}", e))?;
+        let n: Vec<models::Note> = serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse notes.json: {}", e))?;
+        log::info!("Loaded {} notes", n.len());
+        n
+    } else {
+        log::info!("No notes.json found");
+        Vec::new()
+    };
+
     let mut all_columns = Vec::new();
     let mut all_tickets = Vec::new();
 
@@ -177,10 +191,11 @@ pub fn migrate_from_json() -> Result<(), String> {
         boards,
         columns: all_columns,
         tickets: all_tickets,
+        notes,
     };
 
-    log::info!("Total: {} boards, {} columns, {} tickets", 
-        app_data.boards.len(), app_data.columns.len(), app_data.tickets.len());
+    log::info!("Total: {} boards, {} columns, {} tickets, {} notes", 
+        app_data.boards.len(), app_data.columns.len(), app_data.tickets.len(), app_data.notes.len());
 
     // Initialize DB and save migrated data
     log::info!("Initializing SQLite DB...");
@@ -212,8 +227,9 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), std::io::Error> {
 }
 
 fn cleanup_json_files(dir: &PathBuf) -> Result<(), String> {
-    // Remove boards.json
+    // Remove boards.json and notes.json
     let _ = fs::remove_file(dir.join("boards.json"));
+    let _ = fs::remove_file(dir.join("notes.json"));
 
     // Remove board subdirectories (columns.json + tickets/)
     for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {

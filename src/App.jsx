@@ -1,16 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { BoardView } from './components/BoardView';
 import { BoardsView } from './components/BoardsView';
 import { HomeView } from './components/HomeView';
+import { NotesView } from './components/NotesView';
 import { TicketDetail } from './components/TicketDetail';
+import { NoteDetail } from './components/NoteDetail';
+import { SplashScreen } from './components/SplashScreen';
 import { useBoardStore } from './store/boardStore';
 
 function App() {
   const selectedTicketId = useBoardStore((s) => s.selectedTicketId);
+  const selectedNoteId = useBoardStore((s) => s.selectedNoteId);
   const selectedBoardId = useBoardStore((s) => s.selectedBoardId);
   const initialized = useBoardStore((s) => s.initialized);
+  const loadingProgress = useBoardStore((s) => s.loadingProgress);
   const view = useBoardStore((s) => s.view);
+
+  const [showApp, setShowApp] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -33,31 +40,42 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  if (!initialized) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-kb-bg">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-wider mb-2">KANONLY</h1>
-          <p className="text-kb-text-secondary text-sm animate-pulse">Cargando datos...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (initialized) {
+      const timer = setTimeout(() => setShowApp(true), 50);
+      return () => clearTimeout(timer);
+    }
+    setShowApp(false);
+  }, [initialized]);
 
   return (
-    <div className="flex min-h-screen w-full">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-h-screen min-w-0">
-        {view === 'home' ? (
-          <HomeView />
-        ) : view === 'boards' && !selectedBoardId ? (
-          <BoardsView />
-        ) : (
-          <BoardView />
-        )}
-      </main>
-      {selectedTicketId && <TicketDetail />}
-    </div>
+    <>
+      {initialized && (
+        <div
+          className={[
+            'flex min-h-screen w-full',
+            'transition-opacity duration-700 ease-out',
+            showApp ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+        >
+          <Sidebar />
+          <main className="flex-1 flex flex-col min-h-screen min-w-0">
+            {view === 'home' ? (
+              <HomeView />
+            ) : view === 'notes' ? (
+              <NotesView />
+            ) : view === 'boards' && !selectedBoardId ? (
+              <BoardsView />
+            ) : (
+              <BoardView />
+            )}
+          </main>
+          {selectedTicketId && <TicketDetail />}
+          {selectedNoteId && <NoteDetail />}
+        </div>
+      )}
+      <SplashScreen progress={loadingProgress} initialized={initialized} />
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-# KANONLY — Free Open Source (v1.6.3)
+# KANONLY — Free & Source-Available (v1.7.0)
 
 <p align="center">
   <img src="public/logo-text.svg" alt="KANONLY" width="200">
@@ -13,30 +13,29 @@
   </a>
 </p>
 
-This is the **free, open-source demo version** of KANONLY — a privacy-first, offline Kanban desktop app for Windows. This repository exists for **transparency and trust**: anyone can inspect the code, compile it, and try the app.
+This is the **free, source-available version** of **KANONLY** — a privacy-first, offline Kanban desktop app for Windows. This repository exists for **transparency and trust**: anyone can inspect the code, compile it, and use the app with all features unlocked.
 
 > 🇦🇷 Made in Buenos Aires by [Martin Juhal](https://www.martinjuhal.com).
 
 ---
 
-## ⚠️ About This Repository
+## ✨ Features
 
-This public repo contains a **limited demo** of KANONLY. It is NOT a free unlimited version — it has intentional limits to encourage supporting the project via the Microsoft Store version.
-
-| Feature | This Repo (Demo) | Full App (Microsoft Store) |
-|---------|------------------|---------------------|
-| Boards | ✅ **1 max** | ✅ Unlimited |
-| Tickets | ✅ **10 max per board** | ✅ Unlimited |
-| Notes | ❌ Not included | ✅ Unlimited |
-| Comments | ❌ Not included | ✅ Included |
-| Column colors | ❌ Not included | ✅ Included |
-| Emoji icons | ✅ Included | ✅ Included |
-| Drag & drop | ✅ Included | ✅ Included |
-| Rich-text editor | ✅ Included | ✅ Included |
-| Undo (Ctrl+Z) | ✅ Included | ✅ Included |
-| Auto-backup (SQLite) | ✅ Included | ✅ Included |
-| Bilingual (ES/EN) | ✅ Included | ✅ Included |
-| **PRO License (Store IAP)** | ❌ Not included | ✅ Included |
+- **Unlimited Kanban boards** with customizable columns
+- **Unlimited standalone notes** with rich-text editing
+- **Drag & drop** for tickets and columns
+- **Rich-text editor** with bold, italic, underline, inline code, code blocks
+- **Emoji icons** for boards and notes
+- **Comments** on tickets and notes with timestamps
+- **Column colors** — 10-color picker for each column header
+- **Ticket priorities** (low / medium / high)
+- **Deadlines** with date picker
+- **Image attachments** (base64 embedded)
+- **Global search** across tickets
+- **Undo (Ctrl+Z)** up to 3 previous states
+- **Auto-persistence** via SQLite (bundled)
+- **Bilingual UI** — auto-detects Spanish / English
+- **Dark UI** optimized for focus
 
 ---
 
@@ -98,8 +97,6 @@ The installer will be generated in `src-tauri/target/release/bundle/`.
 └── public/                 # Static assets
 ```
 
-> **Note:** This repo does not include Pro-specific modules (license system, upgrade modal, JWT validation, or commercial fonts). Those are kept in the private source repository.
-
 ---
 
 ## 🤝 Contributing
@@ -128,9 +125,9 @@ Please open an issue before submitting major changes.
 
 ## 💬 Why a Public Repo?
 
-As a solo indie developer, I believe in **transparency**: you should be able to see exactly what the app does before installing it. At the same time, I need a sustainable way to keep improving KANONLY. By open-sourcing a demo version of the app, I can offer both trust and a reason to support the project.
+As a solo indie developer, I believe in **transparency**: you should be able to see exactly what the app does before installing it. This public repository mirrors the full application and is provided free of charge.
 
-**Get the full app:** 👉 [kanonly.me](https://www.kanonly.me/)
+**Download the app:** 👉 [kanonly.me](https://www.kanonly.me/)
 
 ---
 
